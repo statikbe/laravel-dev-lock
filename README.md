@@ -6,7 +6,7 @@
     <a href="https://packagist.org/packages/statikbe/statik-dev-lock"><img src="https://img.shields.io/packagist/v/statikbe/statik-dev-lock.svg?style=flat-square" alt="Packagist"></a>
     <a href="https://packagist.org/packages/statikbe/statik-dev-lock"><img src="https://img.shields.io/packagist/php-v/statikbe/statik-dev-lock.svg?style=flat-square" alt="PHP from Packagist"></a>
     <a href="https://packagist.org/packages/statikbe/statik-dev-lock"><img src="https://badge.laravel.cloud/badge/statikbe/statik-dev-lock?style=flat" alt="Laravel versions"></a>
-    <a href="https://github.com/statikbe/statik-dev-lock/actions"><img alt="GitHub Workflow Status (main)" src="https://img.shields.io/github/actions/workflow/status/statikbe/statik-dev-lock/tests.yml?branch=main&label=Tests&style=flat-square"></a>
+    <a href="https://github.com/statikbe/laravel-statik-dev-lock/actions"><img alt="GitHub Workflow Status (main)" src="https://img.shields.io/github/actions/workflow/status/statikbe/laravel-statik-dev-lock/tests.yml?branch=main&label=Tests&style=flat-square"></a>
     <a href="https://packagist.org/packages/statikbe/statik-dev-lock"><img src="https://img.shields.io/packagist/dt/statikbe/statik-dev-lock.svg?style=flat-square" alt="Total Downloads"></a>
 </p>
 

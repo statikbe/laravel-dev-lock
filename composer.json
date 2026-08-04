@@ -8,7 +8,7 @@
         "statik-dev-lock",
         "middleware"
     ],
-    "homepage": "https://github.com/statikbe/statik-dev-lock",
+    "homepage": "https://github.com/statikbe/laravel-statik-dev-lock",
     "license": "MIT",
     "authors": [
         {

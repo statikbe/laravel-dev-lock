@@ -1,9 +1,9 @@
 # Release Notes
 
-## [Unreleased](https://github.com/statikbe/statik-dev-lock/compare/v0.0.1...main)
+## [Unreleased](https://github.com/statikbe/laravel-statik-dev-lock/compare/v0.0.1...main)
 
 
-## [v0.0.1](https://github.com/statikbe/statik-dev-lock/releases/tag/v0.0.1) - 2026-08-04
+## [v0.0.1](https://github.com/statikbe/laravel-statik-dev-lock/releases/tag/v0.0.1) - 2026-08-04
 
 First pre-release. Password protects environments that should not be publicly reachable
 (staging, acceptance, client preview) without an `.htaccess` file or server level basic auth.
@@ -40,10 +40,11 @@ First pre-release. Password protects environments that should not be publicly re
 
 ### Requirements
 
-- PHP 8.2 or higher
-- Laravel 11, 12 or 13 (`illuminate/support`)
+- PHP 8.3 or higher
+- Laravel 12 or 13 (`illuminate/support`)
 
 CI verifies PHP 8.3, 8.4 and 8.5 against Laravel 12 and 13, on Linux and Windows, at both
-`prefer-lowest` and `prefer-stable`. Laravel 11 is supported and the suite passes against 11.55 on
-Testbench 9, but it cannot be part of the matrix: Composer blocks every Laravel 11 release over
-unpatched advisories. See the README's requirements table.
+`prefer-lowest` and `prefer-stable` — the matrix is exactly the package's Composer constraints.
+Laravel 10 and 11 are deliberately out of scope: both branches are past their security-support
+window and Composer refuses to install them without disabling its advisory policy. See the
+README's requirements table.
