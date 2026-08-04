@@ -1,6 +1,6 @@
 # Release Notes
 
-## [Unreleased](https://github.com/statikbe/laravel-statik-dev-lock/compare/v0.0.1...main)
+## [Unreleased](https://github.com/statikbe/laravel-statik-dev-lock/compare/first commit...HEAD)
 
 ### Fixed
 
@@ -24,6 +24,10 @@
   The fallback stylesheet styles the page through them, since the Tailwind classes are inert
   without a build — keep them on a published view.
 
+## [first commit](https://github.com/statikbe/laravel-statik-dev-lock/compare/v0.0.1...first commit) - 2026-08-04
+
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+**Full Changelog**: https://github.com/statikbe/laravel-statik-dev-lock/commits/0.0.1
 
 ## [v0.0.1](https://github.com/statikbe/laravel-statik-dev-lock/releases/tag/v0.0.1) - 2026-08-04
 
