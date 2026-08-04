@@ -29,7 +29,7 @@ translations. There is no facade, no command and no class to call.
 
 - confirm the app is a Laravel project with `bootstrap/app.php`, or an `app/Http/Kernel.php` kept
   from before the slim skeleton
-- check whether `config/statik-dev-lock.php` has already been published
+- check whether `config/statik-dev-lock.php` has already been published (step 3 publishes it if not)
 - check whether the app builds Tailwind through `resources/css/app.css`
 - note the version: the package requires Laravel 12 or 13 on PHP 8.3+, which is exactly what its CI
   covers. On Laravel 11 or older, stop and tell the user to upgrade the app first — those branches
@@ -70,12 +70,49 @@ Two details worth checking explicitly:
   same name, and which one answers depends on registration order. Remove the app's routes instead
   of reasoning about the order.
 
-### 3. Remove the old implementation
+### 3. Publish the package config before removing anything
+
+Always publish the config first, so the old lock's settings have somewhere to move to:
+
+```bash
+php artisan vendor:publish --tag="statik-dev-lock-config"
+```
+
+If the app already has `config/statik-dev-lock.php`, leave it as it is. `vendor:publish` needs
+`--force` to overwrite an existing file, and forcing it discards exactly the values being migrated.
+
+Then move each old setting to its new home. Only one of the four keys has no env variable, so most
+of this is env work rather than config work:
+
+| Old app setting | New key | Where it belongs |
+| --- | --- | --- |
+| on/off flag | `dev_enabled` | `STATIK_DEV_LOCK_ENABLED` in `.env` |
+| the password | `dev_password` | `STATIK_DEV_LOCK_PASSWORD` in `.env` |
+| allowed / whitelisted IPs | `dev_whitelist_ips` | `STATIK_DEV_LOCK_WHITELIST_IPS`, or the array in the published config |
+| excluded / skipped paths | `dev_skip_patterns` | **the published config only** — this key has no env variable |
+
+Carry over every path the app exempted. The package ships `['up', 'api/*']`, so an app that also
+skipped a webhook or callback URL loses it silently unless it is added:
+
+```php
+// config/statik-dev-lock.php
+'dev_skip_patterns' => [
+    'up',
+    'api/*',
+    'webhooks/*',   // ported from the app's own lock
+],
+```
+
+Skipped paths are *unprotected*, so port what the environment genuinely needs and no more. Never
+move a password into the published config — it belongs in the environment.
+
+### 4. Remove the old implementation
 
 Confirm the list with the user, then delete the app copies and swap the registration in one pass,
 so the app is never running two locks at once:
 
-- delete the app middleware, the app view, the app routes and the app config file
+- delete the app middleware, the app view, the app routes and the app config file — the config file
+  only after step 3 has captured its values
 - replace the `use` import and the class reference in `bootstrap/app.php` (or `app/Http/Kernel.php`)
   with the package's FQCN
 - rename the old env variables to `STATIK_DEV_LOCK_*` in `.env`, `.env.example` **and** in the
@@ -95,7 +132,7 @@ grep -rn "App\\\\Http\\\\Middleware\\\\StatikDevLockMiddleware" app bootstrap ro
 Stale `bootstrap/cache/config.php` and `bootstrap/cache/routes-*.php` keep the deleted routes and
 class alive, which is why `optimize:clear` comes before the checks.
 
-### 4. Register the middleware on the `web` group
+### 5. Register the middleware on the `web` group
 
 ```php
 // bootstrap/app.php
@@ -125,7 +162,7 @@ The `web` group is required. The middleware recognises its own password routes w
 route, so `append()` (or `$middleware` outside the `web` group) makes the password page
 redirect to itself.
 
-### 5. Set the environment variables
+### 6. Set the environment variables
 
 ```dotenv
 STATIK_DEV_LOCK_ENABLED=true
@@ -137,16 +174,13 @@ STATIK_DEV_LOCK_WHITELIST_IPS="1.2.3.4,5.6.7.8"
 Never commit a password, and never enable the lock without one: the middleware then answers
 every protected request with a `503` naming the missing variable.
 
-### 6. Adjust what stays reachable
+### 7. Adjust what stays reachable
 
-Publish the config to edit `dev_skip_patterns` (defaults to `up` and `api/*`, matched with
-`Request::is()`):
+`dev_skip_patterns` in the config published in step 3 decides what stays reachable while the lock is
+on, matched with `Request::is()` so wildcards work. It defaults to `up` and `api/*`; add the health
+check, webhook or callback paths this environment needs, and nothing beyond them.
 
-```bash
-php artisan vendor:publish --tag="statik-dev-lock-config"
-```
-
-### 7. Make the password page render
+### 8. Make the password page render
 
 The shipped view uses Tailwind utilities and `@vite('resources/css/app.css')`. With Tailwind
 v4, register the package views as a source or the page renders unstyled:
@@ -188,16 +222,19 @@ Behaviour the app can rely on:
 ## Examples
 
 - Replacing an app's own lock: `grep` turns up `app/Http/Middleware/StatikDevLockMiddleware.php`,
-  `resources/views/dev-lock.blade.php`, two `dev.lock` routes in `routes/web.php` and an
-  `appendToGroup('web', App\Http\Middleware\StatikDevLockMiddleware::class)` line. List all four,
-  delete the first three, point the fourth at the package class, rename the env variables, then
-  `php artisan optimize:clear` and confirm `route:list --path=__dev-lock` shows only the package
-  routes.
+  `resources/views/dev-lock.blade.php`, two `dev.lock` routes in `routes/web.php`, a
+  `config/dev-lock.php` exempting `webhooks/*`, and an
+  `appendToGroup('web', App\Http\Middleware\StatikDevLockMiddleware::class)` line. List all five,
+  publish `statik-dev-lock-config` and copy `webhooks/*` into its `dev_skip_patterns` *before*
+  deleting `config/dev-lock.php`, delete the other app copies, point the registration at the package
+  class, rename the env variables, then `php artisan optimize:clear` and confirm
+  `route:list --path=__dev-lock` shows only the package routes.
 - Locking an acceptance environment: register the middleware on the `web` group, set
   `STATIK_DEV_LOCK_ENABLED=true` and `STATIK_DEV_LOCK_PASSWORD` in that environment only, and
   leave production untouched so the lock stays off there.
 - Keeping a webhook reachable: publish the config and add the webhook path to
-  `dev_skip_patterns`, for example `['up', 'api/*', 'webhooks/*']`.
+  `dev_skip_patterns`, for example `['up', 'api/*', 'webhooks/*']`. Publishing is the only way to
+  change this key — it has no env variable.
 - Verifying the lock in a feature test: assert an unauthenticated request to a protected page
   redirects to `route('dev.lock')`, and that a request with
   `session(['statik_dev_authenticated' => true])` reaches the page.
@@ -207,6 +244,11 @@ Behaviour the app can rely on:
 - registering the package middleware while the app's own copy is still registered: whichever runs
   first wins, and the app's config, view and password keep being used
 - deleting an app's dev lock files before listing them and confirming the removal
+- deleting the app's own config file before publishing `config/statik-dev-lock.php` and porting its
+  values across, which silently drops custom skip patterns and IP whitelists
+- republishing the config with `--force` after the migration, which overwrites the ported values
+- expecting `dev_skip_patterns` to be configurable through the environment: it is the one key with
+  no env variable, so the config must be published to change it
 - treating `resources/views/dev-lock.blade.php` as this package's published view, or leaving it in
   place expecting the package to pick it up
 - leaving app-local `dev.lock` routes in `routes/web.php` next to the package routes

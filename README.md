@@ -167,18 +167,51 @@ two classes are indistinguishable at a glance in `bootstrap/app.php`:
 grep -rn "statik_dev_authenticated\|dev\.lock\|DevLock" app bootstrap config routes resources tests
 ```
 
-Then delete the app copies, point the middleware registration at
+**Publish this package's config before you delete the app's own**, so the existing settings have
+somewhere to go:
+
+```bash
+php artisan vendor:publish --tag="statik-dev-lock-config"
+```
+
+Then move each setting across. Three of the four keys are env driven, so most of this is `.env`
+work — but `dev_skip_patterns` has no env variable, which makes the published config the only place
+to keep the paths your old lock exempted:
+
+| Your old setting | Moves to | Where |
+| --- | --- | --- |
+| on/off flag | `dev_enabled` | `STATIK_DEV_LOCK_ENABLED` |
+| the password | `dev_password` | `STATIK_DEV_LOCK_PASSWORD` |
+| allowed / whitelisted IPs | `dev_whitelist_ips` | `STATIK_DEV_LOCK_WHITELIST_IPS`, or the config array |
+| excluded / skipped paths | `dev_skip_patterns` | the published config only |
+
+An app that also exempted a webhook or callback URL drops back to the `['up', 'api/*']` default
+without an error, so carry those over explicitly:
+
+```php
+// config/statik-dev-lock.php
+'dev_skip_patterns' => [
+    'up',
+    'api/*',
+    'webhooks/*',   // ported from your own lock
+],
+```
+
+Now delete the app copies, point the middleware registration at
 `Statikbe\StatikDevLock\Http\Middleware\StatikDevLockMiddleware`, rename the old env variables to
 `STATIK_DEV_LOCK_*` in `.env`, `.env.example` and your deploy templates, and run
 `php artisan optimize:clear` so cached routes and config stop resurrecting the deleted class.
 
-Two things to watch:
+Three things to watch:
 
 - `resources/views/dev-lock.blade.php` is not this package's published view — publishing writes to
   `resources/views/vendor/statik-dev-lock/`, so a file directly under `resources/views` is the app's
   own and can go.
 - App-local `/__dev-lock` routes collide with the package's on both URI and name, and which one
   answers depends on registration order. Remove them rather than reason about the order.
+- Once you have ported your values, do not re-run `vendor:publish` with `--force` for the config
+  tag — it overwrites `config/statik-dev-lock.php` with the package defaults and takes the ported
+  skip patterns with it. And keep the password in the environment, never in the published file.
 
 The bundled Boost skill walks an agent through exactly this — see below.
 
