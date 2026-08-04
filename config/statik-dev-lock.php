@@ -58,4 +58,20 @@ return [
         'api/*',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Vite Entrypoint
+    |--------------------------------------------------------------------------
+    |
+    | The compiled CSS used to style the password page. Point this at the
+    | entrypoint this app actually builds, or set it to null to skip Vite
+    | altogether and always use the package's own stylesheet.
+    |
+    | Either way the page renders: when the entrypoint cannot be resolved,
+    | resources/css/dev-lock.css is inlined instead.
+    |
+    */
+
+    'dev_vite_entrypoint' => env('STATIK_DEV_LOCK_VITE_ENTRYPOINT', 'resources/css/app.css'),
+
 ];

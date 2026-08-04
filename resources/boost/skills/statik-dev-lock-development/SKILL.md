@@ -81,8 +81,8 @@ php artisan vendor:publish --tag="statik-dev-lock-config"
 If the app already has `config/statik-dev-lock.php`, leave it as it is. `vendor:publish` needs
 `--force` to overwrite an existing file, and forcing it discards exactly the values being migrated.
 
-Then move each old setting to its new home. Only one of the four keys has no env variable, so most
-of this is env work rather than config work:
+Then move each old setting to its new home. All but one key has an env variable, so most of this is
+env work rather than config work:
 
 | Old app setting | New key | Where it belongs |
 | --- | --- | --- |
@@ -182,30 +182,44 @@ check, webhook or callback paths this environment needs, and nothing beyond them
 
 ### 8. Make the password page render
 
-The shipped view uses Tailwind utilities and `@vite('resources/css/app.css')`. With Tailwind
-v4, register the package views as a source or the page renders unstyled:
+The page uses Tailwind utilities and the app's compiled CSS. With Tailwind v4, register the package
+views as a source or the page renders unstyled:
 
 ```css
 /* resources/css/app.css */
 @source '../../vendor/statikbe/statik-dev-lock/resources/views';
 ```
 
-Publish the view to restyle it or to remove the `@vite` dependency, and the translations to
-change the wording:
+If the app builds a different entrypoint, point the config at it rather than publishing anything:
+
+```dotenv
+STATIK_DEV_LOCK_VITE_ENTRYPOINT="resources/css/site.css"
+```
+
+This step is presentation only — never a blocker. The middleware resolves the compiled CSS itself
+and inlines the package's `resources/css/dev-lock.css` when it cannot, so the form still renders in
+an app with no Vite build, an unbuilt deploy, or with an entrypoint missing from the manifest. Set
+the entrypoint to `null` to skip Vite altogether. Do not add `@vite` to the view to "fix" an
+unstyled page: that reintroduces the crash the fallback exists to prevent.
+
+Publish to customise any of it — the stylesheet to restyle the fallback (the middleware prefers a
+published copy), the view to change the markup, keeping the `dev-lock-card`, `dev-access-heading`
+and `dev-lock-note` ids the fallback styles, and the translations for the wording:
 
 ```bash
+php artisan vendor:publish --tag="statik-dev-lock-css"
 php artisan vendor:publish --tag="statik-dev-lock-views"
 php artisan vendor:publish --tag="statik-dev-lock-lang"
 ```
 
 Publish tags: `statik-dev-lock`, `statik-dev-lock-config`, `statik-dev-lock-views`,
-`statik-dev-lock-lang`.
+`statik-dev-lock-lang`, `statik-dev-lock-css`.
 
 ## Rules, References, and Templates
 
 Read before executing:
 
-- `config/statik-dev-lock.php` for the four config keys and their env variables
+- `config/statik-dev-lock.php` for the five config keys and their env variables
 - `resources/views/dev-lock.blade.php` for the markup a host app can replace
 - `README.md` for the full behaviour description
 
@@ -218,6 +232,8 @@ Behaviour the app can rely on:
 - unlocking stores `statik_dev_authenticated` in the session and regenerates the session id
 - failed attempts are rate limited per IP: 5 attempts, then a 5 minute lockout
 - `?redirect_to=` only honours `http`/`https` URLs on the app's own host; anything else lands on `/`
+- the password form renders whether or not the app has a Vite build: the middleware inlines the
+  package's `resources/css/dev-lock.css` when the compiled CSS cannot be resolved
 
 ## Examples
 
@@ -255,6 +271,9 @@ Behaviour the app can rely on:
 - swapping the class in `bootstrap/app.php` but leaving the old `DEV_*` env variables, which
   disables the lock on the next deploy
 - registering the middleware globally with `append()` instead of `appendToGroup('web', ...)`
+- adding `@vite(...)` to the password view, or dropping the `dev-lock-card` /
+  `dev-access-heading` / `dev-lock-note` ids from a published copy: the first can 500 the whole
+  locked environment when no manifest exists, the second leaves the fallback with nothing to style
 - enabling the lock without `STATIK_DEV_LOCK_PASSWORD`, or hardcoding a password in the config
 - treating the lock as real authentication: it hides an environment, it does not protect user data
 - adding `api/*` routes to the skip patterns and assuming they are protected

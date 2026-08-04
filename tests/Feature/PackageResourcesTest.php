@@ -25,10 +25,38 @@ it('loads the package views', function () {
     expect(view()->exists('statik-dev-lock::dev-lock'))->toBeTrue();
 });
 
-it('publishes the config, views and translations but ships no assets', function () {
+it('publishes the config, views, translations and fallback stylesheet but ships no assets', function () {
     expect(ServiceProvider::publishableGroups())
-        ->toContain('statik-dev-lock', 'statik-dev-lock-config', 'statik-dev-lock-views', 'statik-dev-lock-lang')
+        ->toContain(
+            'statik-dev-lock',
+            'statik-dev-lock-config',
+            'statik-dev-lock-views',
+            'statik-dev-lock-lang',
+            'statik-dev-lock-css',
+        )
         ->not->toContain('statik-dev-lock-assets');
+});
+
+it('publishes the fallback stylesheet where the middleware looks for it', function () {
+    $paths = ServiceProvider::pathsToPublish(null, 'statik-dev-lock-css');
+
+    expect($paths)->toHaveCount(1)
+        ->and(array_key_first($paths))->toEndWith('/resources/css')
+        ->and(reset($paths))->toBe(resource_path('css/vendor/statik-dev-lock'));
+});
+
+it('actually copies the fallback stylesheet when the css tag is published', function () {
+    $target = resource_path('css/vendor/statik-dev-lock/dev-lock.css');
+
+    try {
+        $this->artisan('vendor:publish', ['--tag' => 'statik-dev-lock-css'])->assertSuccessful();
+
+        expect($target)->toBeReadableFile()
+            ->and(file_get_contents($target))->toContain('#dev-lock-card');
+    } finally {
+        // The middleware prefers this copy, so leaving it behind would leak into other tests.
+        is_file($target) && unlink($target);
+    }
 });
 
 it('does not register the dev lock routes while the lock is off', function () {

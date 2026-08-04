@@ -2,6 +2,28 @@
 
 ## [Unreleased](https://github.com/statikbe/laravel-statik-dev-lock/compare/v0.0.1...main)
 
+### Fixed
+
+- The password page no longer depends on the host app having a built Vite manifest. The view called
+  `@vite('resources/css/app.css')`, which throws when there is no manifest or when the manifest has
+  no such entry — and since the lock gates every request, that turned into a `500` for the whole
+  environment with no way in. The middleware now resolves the compiled CSS itself and inlines
+  `resources/css/dev-lock.css` when it cannot.
+
+### Added
+
+- `dev_vite_entrypoint` config key (`STATIK_DEV_LOCK_VITE_ENTRYPOINT`, default
+  `resources/css/app.css`) for apps that build a different CSS entrypoint. Set it to `null` to skip
+  Vite altogether and always use the package's stylesheet.
+- Publish tag `statik-dev-lock-css` for `resources/css/dev-lock.css`. A copy published to
+  `resources/css/vendor/statik-dev-lock/dev-lock.css` takes precedence over the packaged one.
+
+### Changed
+
+- The password page markup carries `dev-lock-card`, `dev-access-heading` and `dev-lock-note` ids.
+  The fallback stylesheet styles the page through them, since the Tailwind classes are inert
+  without a build — keep them on a published view.
+
 
 ## [v0.0.1](https://github.com/statikbe/laravel-statik-dev-lock/releases/tag/v0.0.1) - 2026-08-04
 

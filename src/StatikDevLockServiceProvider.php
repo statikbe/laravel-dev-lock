@@ -37,6 +37,12 @@ class StatikDevLockServiceProvider extends ServiceProvider
             __DIR__.'/../resources/views' => resource_path('views/vendor/statik-dev-lock'),
         ], ['statik-dev-lock', 'statik-dev-lock-views']);
 
+        // The middleware prefers this copy over the packaged one, the same way a published view
+        // overrides a package view.
+        $this->publishes([
+            __DIR__.'/../resources/css' => resource_path('css/vendor/statik-dev-lock'),
+        ], ['statik-dev-lock', 'statik-dev-lock-css']);
+
         $this->publishes([
             __DIR__.'/../lang' => $this->app->langPath('vendor/statik-dev-lock'),
         ], ['statik-dev-lock', 'statik-dev-lock-lang']);

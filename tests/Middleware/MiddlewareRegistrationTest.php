@@ -6,7 +6,7 @@ it('protects the application when registered on the web group', function () {
     $this->lockWebGroup();
 
     $this->get('/dashboard')->assertRedirect(route('dev.lock', ['redirect_to' => 'http://localhost/dashboard']));
-    $this->withoutVite()->get(route('dev.lock'))->assertStatus(401);
+    $this->get(route('dev.lock'))->assertStatus(401);
 });
 
 it('cannot show the password form when registered as global middleware', function () {

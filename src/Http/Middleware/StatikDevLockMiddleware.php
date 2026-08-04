@@ -3,11 +3,14 @@
 namespace Statikbe\StatikDevLock\Http\Middleware;
 
 use Closure;
+use Illuminate\Foundation\Vite;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\HtmlString;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
+use Throwable;
 
 /**
  * Password protects environments that should not be publicly reachable (staging, acceptance, ...).
@@ -207,7 +210,59 @@ class StatikDevLockMiddleware
         return $this->withLockHeaders(response()->view('statik-dev-lock::dev-lock', [
             'error' => session('dev_lock_error'),
             'redirect_to' => $request->query('redirect_to'),
+            'styles' => $this->styles(),
         ], 401));
+    }
+
+    /**
+     * The stylesheet markup for the password page.
+     *
+     * Normally the host app's compiled CSS, but resolving that can fail in ways which are entirely
+     * normal for a locked environment: an app with no Vite build at all, a deploy that never ran the
+     * frontend build (no manifest), or a CSS entrypoint other than the configured one (a manifest
+     * without it). This middleware gates every request, so any of those would take the whole
+     * environment down with no way back in — hence the fallback, and hence resolving the tags here
+     * instead of with `@vite` in the view.
+     *
+     * `Throwable` rather than `ViteException`: the failures above are separate exception classes,
+     * and this wraps a single call, so there is nothing else it can swallow.
+     */
+    private function styles(): HtmlString
+    {
+        $entrypoint = config('statik-dev-lock.dev_vite_entrypoint');
+
+        if (! is_string($entrypoint) || $entrypoint === '') {
+            return $this->fallbackStyles();
+        }
+
+        try {
+            return app(Vite::class)($entrypoint);
+        } catch (Throwable) {
+            return $this->fallbackStyles();
+        }
+    }
+
+    /**
+     * The package's own stylesheet, inlined.
+     *
+     * Inlined rather than linked because a file under the package's `resources/` is not web
+     * accessible: linking it would need publishing into the host app's public directory, and a
+     * fallback that only works after a publish step is not a fallback.
+     */
+    private function fallbackStyles(): HtmlString
+    {
+        return new HtmlString('<style>'.file_get_contents($this->fallbackStylesheet()).'</style>');
+    }
+
+    /**
+     * The fallback stylesheet to inline, preferring a copy published with the
+     * `statik-dev-lock-css` tag over the packaged one — as published views work.
+     */
+    private function fallbackStylesheet(): string
+    {
+        $published = resource_path('css/vendor/statik-dev-lock/dev-lock.css');
+
+        return is_file($published) ? $published : __DIR__.'/../../../resources/css/dev-lock.css';
     }
 
     /**

@@ -7,9 +7,12 @@
 
     <title>{{ config('app.name', 'Laravel') }}</title>
 
-    <!-- Styles: the host app compiles Tailwind. Publish this view to restyle it or to
-         drop the Vite dependency. -->
-    @vite('resources/css/app.css')
+    {{--
+        The host app's compiled CSS, or this package's own stylesheet inlined when that cannot be
+        resolved. The middleware decides which, so that a missing Vite manifest cannot 500 the one
+        page able to unlock this environment. Configured with `statik-dev-lock.dev_vite_entrypoint`.
+    --}}
+    {!! $styles !!}
 </head>
 
 <body class="flex min-h-screen bg-white font-sans text-gray-900 antialiased dark:bg-gray-900 dark:text-gray-100">
@@ -17,7 +20,7 @@
     <section
         class="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900"
     >
-        <div class="mx-auto max-w-80 min-w-80 px-6 py-12">
+        <div id="dev-lock-card" class="mx-auto max-w-80 min-w-80 px-6 py-12">
             <div class="mb-8 text-center">
                 <h1 id="dev-access-heading" class="text-4xl font-bold text-gray-900 dark:text-white">
                     {{ __('statik-dev-lock::messages.dev_lock.title') }}
@@ -59,7 +62,7 @@
                 </button>
             </form>
 
-            <div class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            <div id="dev-lock-note" class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
                 <p>{{ __('statik-dev-lock::messages.dev_lock.site_in_dev_mode') }}</p>
                 <p>{{ __('statik-dev-lock::messages.dev_lock.api_endpoints_remain') }}</p>
             </div>

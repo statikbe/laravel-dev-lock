@@ -92,6 +92,7 @@ That is all. The lock is off by default, so nothing changes on environments that
 | `STATIK_DEV_LOCK_PASSWORD` | `dev_password` | `null` | The password visitors have to enter. There is no default on purpose — see below. |
 | `STATIK_DEV_LOCK_WHITELIST_IPS` | `dev_whitelist_ips` | `['127.0.0.1', 'localhost']` | IPs that never see the form. An array, or a comma separated string: `STATIK_DEV_LOCK_WHITELIST_IPS="1.2.3.4,5.6.7.8"`. |
 | — | `dev_skip_patterns` | `['up', 'api/*']` | Paths that stay reachable while the lock is on. Matched with `Request::is()`, so wildcards work. |
+| `STATIK_DEV_LOCK_VITE_ENTRYPOINT` | `dev_vite_entrypoint` | `'resources/css/app.css'` | The compiled CSS used to style the password page. Point it at the entrypoint your app builds, or set it to `null` to always use the package's own stylesheet. |
 
 Config keys live under the `statik-dev-lock` namespace, so `dev_enabled` is
 `config('statik-dev-lock.dev_enabled')`.
@@ -125,24 +126,34 @@ A few details worth knowing:
 
 ## The password page
 
-The shipped view uses Tailwind utility classes and the host app's compiled CSS:
-
-```blade
-@vite('resources/css/app.css')
-```
-
-With Tailwind v4 the class scanner has to see the package's Blade file, otherwise the page renders unstyled. Add it as a source in your CSS entrypoint:
+The page is styled with Tailwind utility classes and your app's compiled CSS. With Tailwind v4 the class scanner has to see the package's Blade file, otherwise the page renders unstyled. Add it as a source in your CSS entrypoint:
 
 ```css
 /* resources/css/app.css */
 @source '../../vendor/statikbe/statik-dev-lock/resources/views';
 ```
 
-Prefer your own markup, or an app that does not build Tailwind? Publish the view and edit it — including dropping the `@vite` line:
+Building a different entrypoint? Point the config at it instead of publishing anything:
+
+```dotenv
+STATIK_DEV_LOCK_VITE_ENTRYPOINT="resources/css/site.css"
+```
+
+**If your app has no Vite build, the page still works.** The lock gates every request, so a page that cannot render would leave you with no way into the environment. Rather than calling `@vite` in the view, the middleware resolves your compiled CSS and inlines the package's own `resources/css/dev-lock.css` when it cannot — which covers an app that does not use Vite at all, a deploy where the frontend build never ran, and an entrypoint that is not in the manifest. The fallback page is plain but fully usable, and nothing needs publishing to get it. Set `STATIK_DEV_LOCK_VITE_ENTRYPOINT=null` to skip Vite entirely and always use it.
+
+To restyle the fallback, publish the stylesheet and edit it — the middleware prefers your copy over the packaged one:
+
+```bash
+php artisan vendor:publish --tag="statik-dev-lock-css"
+```
+
+Prefer your own markup? Publish the view and edit it:
 
 ```bash
 php artisan vendor:publish --tag="statik-dev-lock-views"
 ```
+
+If you do, keep the `dev-lock-card`, `dev-access-heading` and `dev-lock-note` ids — they are the only hooks the fallback stylesheet has.
 
 The page ships with English and Dutch translations. Publish them to change the wording:
 
@@ -174,9 +185,9 @@ somewhere to go:
 php artisan vendor:publish --tag="statik-dev-lock-config"
 ```
 
-Then move each setting across. Three of the four keys are env driven, so most of this is `.env`
-work — but `dev_skip_patterns` has no env variable, which makes the published config the only place
-to keep the paths your old lock exempted:
+Then move each setting across. All but one key is env driven, so most of this is `.env` work — but
+`dev_skip_patterns` has no env variable, which makes the published config the only place to keep the
+paths your old lock exempted:
 
 | Your old setting | Moves to | Where |
 | --- | --- | --- |

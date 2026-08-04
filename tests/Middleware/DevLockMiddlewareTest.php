@@ -6,7 +6,6 @@ use Statikbe\StatikDevLock\Tests\LockedEnvironmentTestCase;
 
 beforeEach(function () {
     $this->lockWebGroup();
-    $this->withoutVite();
 });
 
 it('passes every request through while the lock is off', function () {

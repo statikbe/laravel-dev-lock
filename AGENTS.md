@@ -35,9 +35,10 @@ Using the package name in a repo URL silently breaks badges and links. This has 
 ```
 src/StatikDevLockServiceProvider.php          register + boot wiring, publish tags
 src/Http/Middleware/StatikDevLockMiddleware.php   the whole feature
-config/statik-dev-lock.php                    4 env-driven keys
+config/statik-dev-lock.php                    5 keys, all env-driven except dev_skip_patterns
 routes/statik-dev-lock.php                    dev.lock, dev.lock.submit — registered only when enabled
 resources/views/dev-lock.blade.php            the password page
+resources/css/dev-lock.css                    fallback styles, inlined when Vite cannot resolve
 lang/{en,nl}/messages.php                     translations
 resources/boost/skills/.../SKILL.md           bundled Laravel Boost skill (ships to consumers)
 ```
@@ -45,7 +46,7 @@ resources/boost/skills/.../SKILL.md           bundled Laravel Boost skill (ships
 Namespaces: `Statikbe\StatikDevLock\` → `src/`, `Statikbe\StatikDevLock\Tests\` → `tests/`.
 
 Config namespace is `statik-dev-lock`; env vars are prefixed `STATIK_DEV_LOCK_`. Publish tags are
-`statik-dev-lock` plus `-config`, `-views`, `-lang`.
+`statik-dev-lock` plus `-config`, `-views`, `-lang`, `-css`.
 
 ## Behaviour That Constrains Changes
 
@@ -82,14 +83,14 @@ Arch tests forbid `dd()`, `ddd()`, `env()` and `exit()` in autoloaded code. `env
   or the routes never register.
 - `LockedEnvironmentTestCase` deliberately does not register the middleware. Each test picks
   `lockWebGroup()` or `lockGlobally()`, so the `web` group requirement is proven rather than assumed.
-- Any test that renders the password page needs `$this->withoutVite()`. The shipped Blade calls
-  `@vite('resources/css/app.css')`, which throws without a host app manifest.
+- Rendering the password page needs no `$this->withoutVite()`. Testbench has no Vite manifest, so
+  those tests exercise the real fallback — which is the point, and why the calls were removed.
 - Test observable behaviour through the public surface: service provider wiring, routes, config
   merge, published resources, translations, and the promises the README makes.
 
 ## Release Surface
 
-The published archive is **12 files**. Everything dev-only is `export-ignore`d in `.gitattributes`
+The published archive is **13 files**. Everything dev-only is `export-ignore`d in `.gitattributes`
 (`tests`, `.github`, the tool configs, `AGENTS.md`).
 
 Add a new dev-only file at the root and it ships unless you add it there too. Verify with:
@@ -103,12 +104,28 @@ YAML frontmatter with `name` and `description` — Boost skips a malformed skill
 `tests/Feature/BoostSkillTest.php` asserts the contract. Update the skill when public behaviour,
 config keys, publish tags, or README guidance change.
 
-## Known Rough Edge
+## Styling And The Vite Fallback
 
-The shipped view calls `@vite('resources/css/app.css')`. In a host app with no built manifest this
-throws — and because the lock gates every `web` request, the whole site returns 500 with no way in.
-The documented workaround is publishing the view and dropping the `@vite` line. A fallback that
-degrades to inline styles when no manifest or hot file exists has not been implemented.
+The page is styled with the host app's Tailwind build, but the view does **not** call `@vite`. The
+middleware resolves the tags in `styles()` and passes them in, because `@vite` throws in two
+situations that are normal for a locked environment — a deploy that skipped the frontend build has
+no manifest, and an app whose CSS entry is not `resources/css/app.css` has a manifest without it.
+Since the lock gates every `web` request, either one would 500 the whole environment with no way
+back in.
+
+The entrypoint is `dev_vite_entrypoint` (default `resources/css/app.css`); set it to null or an empty
+string and Vite is skipped entirely. Either way `styles()` returns an `HtmlString`, so the view is
+just `{!! $styles !!}` — no conditional in the template.
+
+The fallback inlines `resources/css/dev-lock.css`, and the Tailwind classes in the markup go inert.
+That stylesheet works from element selectors plus `#dev-lock-card`, `#dev-access-heading` and
+`#dev-lock-note`, so **keep those ids on the markup** — they are the fallback's only hooks. A copy
+published with `statik-dev-lock-css` to `resources/css/vendor/statik-dev-lock/dev-lock.css` wins over
+the packaged one, the way published views do. It is inlined rather than linked because a file under
+the package's `resources/` is not web accessible without publishing into the host app's `public/`.
+
+`tests/Middleware/DevLockViteFallbackTest.php` covers all four paths: no manifest, a resolvable
+build, a Vite failure that is not a missing manifest, and a stubbed-out Vite.
 
 ## Conventions
 
