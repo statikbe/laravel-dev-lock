@@ -1,6 +1,6 @@
 <?php
 
-namespace Statikbe\StatikDevLock\Http\Middleware;
+namespace Statikbe\DevLock\Http\Middleware;
 
 use Closure;
 use Illuminate\Foundation\Vite;
@@ -15,20 +15,20 @@ use Throwable;
 /**
  * Password protects environments that should not be publicly reachable (staging, acceptance, ...).
  *
- * The lock is switched on with the `statik-dev-lock.dev_enabled` config flag, which also
+ * The lock is switched on with the `dev-lock.dev_enabled` config flag, which also
  * registers the dev.lock routes. While it is on, every request has to pass the password
  * form first, except for:
- * - paths matching `statik-dev-lock.dev_skip_patterns` (health check, API, ...)
- * - clients whose IP is listed in `statik-dev-lock.dev_whitelist_ips`
+ * - paths matching `dev-lock.dev_skip_patterns` (health check, API, ...)
+ * - clients whose IP is listed in `dev-lock.dev_whitelist_ips`
  * - sessions that already entered the password (rate limited per IP)
  *
  * Register this on the `web` middleware group in the host app's bootstrap/app.php. It uses
  * `routeIs()`, which needs a resolved route, so global middleware (which runs before the
  * router dispatches) cannot work.
  */
-class StatikDevLockMiddleware
+class DevLockMiddleware
 {
-    private const string RATE_LIMIT_KEY_PREFIX = 'statik_dev_password_attempts:';
+    private const string RATE_LIMIT_KEY_PREFIX = 'dev_lock_password_attempts:';
 
     /**
      * The number of password attempts allowed per IP before the lockout kicks in.
@@ -82,17 +82,17 @@ class StatikDevLockMiddleware
     /**
      * Determine if protection should be skipped.
      *
-     * The dev.lock routes are only registered when `statik-dev-lock.dev_enabled` is true
-     * (see routes/statik-dev-lock.php), so the same strict check is used here: without
+     * The dev.lock routes are only registered when `dev-lock.dev_enabled` is true
+     * (see routes/dev-lock.php), so the same strict check is used here: without
      * those routes there is no password form to send anybody to.
      */
     private function shouldSkipProtection(Request $request): bool
     {
-        if (config('statik-dev-lock.dev_enabled') !== true) {
+        if (config('dev-lock.dev_enabled') !== true) {
             return true;
         }
 
-        foreach ((array) config('statik-dev-lock.dev_skip_patterns', []) as $pattern) {
+        foreach ((array) config('dev-lock.dev_skip_patterns', []) as $pattern) {
             if (is_string($pattern) && $request->is($pattern)) {
                 return true;
             }
@@ -106,7 +106,7 @@ class StatikDevLockMiddleware
      */
     private function configuredPassword(): ?string
     {
-        $password = config('statik-dev-lock.dev_password');
+        $password = config('dev-lock.dev_password');
 
         return is_string($password) && $password !== '' ? $password : null;
     }
@@ -116,7 +116,7 @@ class StatikDevLockMiddleware
      */
     private function isAuthenticated(): bool
     {
-        return session('statik_dev_authenticated') === true;
+        return session('dev_lock_authenticated') === true;
     }
 
     /**
@@ -126,7 +126,7 @@ class StatikDevLockMiddleware
      */
     private function isIpWhitelisted(Request $request): bool
     {
-        $allowedIps = config('statik-dev-lock.dev_whitelist_ips', []);
+        $allowedIps = config('dev-lock.dev_whitelist_ips', []);
 
         if (! is_array($allowedIps)) {
             $allowedIps = explode(',', (string) $allowedIps);
@@ -142,7 +142,7 @@ class StatikDevLockMiddleware
     {
         return $request->isMethod('POST')
             && $request->routeIs('dev.lock.submit')
-            && $request->has('statik_dev_password');
+            && $request->has('dev_lock_password');
     }
 
     /**
@@ -158,7 +158,7 @@ class StatikDevLockMiddleware
             ]));
         }
 
-        if (! $this->isValidPassword($request->input('statik_dev_password'))) {
+        if (! $this->isValidPassword($request->input('dev_lock_password'))) {
             RateLimiter::hit($rateLimitKey, self::LOCKOUT_DURATION);
 
             return $this->rejectPasswordAttempt($request, __('validation.current_password'));
@@ -170,7 +170,7 @@ class StatikDevLockMiddleware
         // beforehand (a sibling subdomain is enough) does not become an unlocked one.
         $request->session()->regenerate();
 
-        session(['statik_dev_authenticated' => true]);
+        session(['dev_lock_authenticated' => true]);
 
         return redirect($this->getRedirectUrl($request));
     }
@@ -178,7 +178,7 @@ class StatikDevLockMiddleware
     /**
      * Check if the submitted password matches the configured one, in constant time.
      *
-     * Anything that is not a string is rejected outright: `statik_dev_password[]=x`
+     * Anything that is not a string is rejected outright: `dev_lock_password[]=x`
      * submits an array, which would be a TypeError inside hash_equals().
      */
     private function isValidPassword(mixed $submitted): bool
@@ -207,7 +207,7 @@ class StatikDevLockMiddleware
      */
     private function showPasswordForm(Request $request): Response
     {
-        return $this->withLockHeaders(response()->view('statik-dev-lock::dev-lock', [
+        return $this->withLockHeaders(response()->view('dev-lock::dev-lock', [
             'error' => session('dev_lock_error'),
             'redirect_to' => $request->query('redirect_to'),
             'styles' => $this->styles(),
@@ -229,7 +229,7 @@ class StatikDevLockMiddleware
      */
     private function styles(): HtmlString
     {
-        $entrypoint = config('statik-dev-lock.dev_vite_entrypoint');
+        $entrypoint = config('dev-lock.dev_vite_entrypoint');
 
         if (! is_string($entrypoint) || $entrypoint === '') {
             return $this->fallbackStyles();
@@ -256,11 +256,11 @@ class StatikDevLockMiddleware
 
     /**
      * The fallback stylesheet to inline, preferring a copy published with the
-     * `statik-dev-lock-css` tag over the packaged one — as published views work.
+     * `dev-lock-css` tag over the packaged one — as published views work.
      */
     private function fallbackStylesheet(): string
     {
-        $published = resource_path('css/vendor/statik-dev-lock/dev-lock.css');
+        $published = resource_path('css/vendor/dev-lock/dev-lock.css');
 
         return is_file($published) ? $published : __DIR__.'/../../../resources/css/dev-lock.css';
     }
@@ -273,7 +273,7 @@ class StatikDevLockMiddleware
      */
     private function showMisconfiguredNotice(): Response
     {
-        return $this->withLockHeaders(response(__('statik-dev-lock::messages.dev_lock.not_configured'), 503));
+        return $this->withLockHeaders(response(__('dev-lock::messages.dev_lock.not_configured'), 503));
     }
 
     /**

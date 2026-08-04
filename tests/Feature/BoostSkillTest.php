@@ -9,7 +9,7 @@ use Symfony\Component\Yaml\Yaml;
  */
 function boostSkillPath(): string
 {
-    return dirname(__DIR__, 2).'/resources/boost/skills/statik-dev-lock-development/SKILL.md';
+    return dirname(__DIR__, 2).'/resources/boost/skills/dev-lock-development/SKILL.md';
 }
 
 it('ships the boost skill where laravel boost looks for it', function () {
@@ -25,6 +25,6 @@ it('gives the boost skill the frontmatter boost requires to register it', functi
 
     $frontmatter = Yaml::parse($matches[1]);
 
-    expect($frontmatter['name'])->toBe('statik-dev-lock-development')
+    expect($frontmatter['name'])->toBe('dev-lock-development')
         ->and($frontmatter['description'])->toBeString()->not->toBeEmpty();
 });

@@ -10,7 +10,7 @@
     {{--
         The host app's compiled CSS, or this package's own stylesheet inlined when that cannot be
         resolved. The middleware decides which, so that a missing Vite manifest cannot 500 the one
-        page able to unlock this environment. Configured with `statik-dev-lock.dev_vite_entrypoint`.
+        page able to unlock this environment. Configured with `dev-lock.dev_vite_entrypoint`.
     --}}
     {!! $styles !!}
 </head>
@@ -23,7 +23,7 @@
         <div id="dev-lock-card" class="mx-auto max-w-80 min-w-80 px-6 py-12">
             <div class="mb-8 text-center">
                 <h1 id="dev-access-heading" class="text-4xl font-bold text-gray-900 dark:text-white">
-                    {{ __('statik-dev-lock::messages.dev_lock.title') }}
+                    {{ __('dev-lock::messages.dev_lock.title') }}
                 </h1>
             </div>
             <form
@@ -34,15 +34,15 @@
                 @csrf
                 <div>
                     <label
-                        for="statik_dev_password"
+                        for="dev_lock_password"
                         class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
                     >
-                        {{ __('statik-dev-lock::messages.dev_lock.enter_password') }}
+                        {{ __('dev-lock::messages.dev_lock.enter_password') }}
                     </label>
                     <input
                         type="password"
-                        id="statik_dev_password"
-                        name="statik_dev_password"
+                        id="dev_lock_password"
+                        name="dev_lock_password"
                         required
                         autofocus
                         class="w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
@@ -58,13 +58,13 @@
                     type="submit"
                     class="w-full items-center justify-center rounded-md border border-transparent bg-indigo-700 px-5 py-3 text-base font-medium text-white transition-colors duration-200 hover:bg-indigo-800 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-hidden"
                 >
-                    {{ __('statik-dev-lock::messages.dev_lock.access_site') }}
+                    {{ __('dev-lock::messages.dev_lock.access_site') }}
                 </button>
             </form>
 
             <div id="dev-lock-note" class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-                <p>{{ __('statik-dev-lock::messages.dev_lock.site_in_dev_mode') }}</p>
-                <p>{{ __('statik-dev-lock::messages.dev_lock.api_endpoints_remain') }}</p>
+                <p>{{ __('dev-lock::messages.dev_lock.site_in_dev_mode') }}</p>
+                <p>{{ __('dev-lock::messages.dev_lock.api_endpoints_remain') }}</p>
             </div>
         </div>
     </section>

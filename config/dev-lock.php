@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'dev_enabled' => env('STATIK_DEV_LOCK_ENABLED', false),
+    'dev_enabled' => env('DEV_LOCK_ENABLED', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -26,7 +26,7 @@ return [
     |
     */
 
-    'dev_password' => env('STATIK_DEV_LOCK_PASSWORD'),
+    'dev_password' => env('DEV_LOCK_PASSWORD'),
 
     /*
     |--------------------------------------------------------------------------
@@ -34,11 +34,11 @@ return [
     |--------------------------------------------------------------------------
     |
     | Clients on these IPs never see the password form. Either an array or a
-    | comma separated string, e.g. STATIK_DEV_LOCK_WHITELIST_IPS="1.2.3.4,5.6.7.8".
+    | comma separated string, e.g. DEV_LOCK_WHITELIST_IPS="1.2.3.4,5.6.7.8".
     |
     */
 
-    'dev_whitelist_ips' => env('STATIK_DEV_LOCK_WHITELIST_IPS', [
+    'dev_whitelist_ips' => env('DEV_LOCK_WHITELIST_IPS', [
         '127.0.0.1',
         'localhost',
     ]),
@@ -72,6 +72,6 @@ return [
     |
     */
 
-    'dev_vite_entrypoint' => env('STATIK_DEV_LOCK_VITE_ENTRYPOINT', 'resources/css/app.css'),
+    'dev_vite_entrypoint' => env('DEV_LOCK_VITE_ENTRYPOINT', 'resources/css/app.css'),
 
 ];

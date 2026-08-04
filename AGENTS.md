@@ -1,4 +1,4 @@
-# Laravel Statik Dev Lock
+# Laravel Dev Lock
 
 A Laravel package that password protects environments which should not be publicly reachable
 (staging, acceptance, client preview) without `.htaccess` or server level basic auth.
@@ -23,9 +23,9 @@ agree. Change one, change all three.
 
 ## Two Names, Do Not Mix Them
 
-- **Composer/Packagist package:** `statikbe/statik-dev-lock` — used by the Packagist and
+- **Composer/Packagist package:** `statikbe/laravel-dev-lock` — used by the Packagist and
   `badge.laravel.cloud` badges.
-- **GitHub repository:** `statikbe/laravel-statik-dev-lock` — used by `composer.json`'s `homepage`,
+- **GitHub repository:** `statikbe/laravel-dev-lock` — used by `composer.json`'s `homepage`,
   the CI workflow-status badge, and the CHANGELOG compare/tag links.
 
 Using the package name in a repo URL silently breaks badges and links. This has happened before.
@@ -33,20 +33,20 @@ Using the package name in a repo URL silently breaks badges and links. This has 
 ## Layout
 
 ```
-src/StatikDevLockServiceProvider.php          register + boot wiring, publish tags
-src/Http/Middleware/StatikDevLockMiddleware.php   the whole feature
-config/statik-dev-lock.php                    5 keys, all env-driven except dev_skip_patterns
-routes/statik-dev-lock.php                    dev.lock, dev.lock.submit — registered only when enabled
+src/DevLockServiceProvider.php          register + boot wiring, publish tags
+src/Http/Middleware/DevLockMiddleware.php   the whole feature
+config/dev-lock.php                    5 keys, all env-driven except dev_skip_patterns
+routes/dev-lock.php                    dev.lock, dev.lock.submit — registered only when enabled
 resources/views/dev-lock.blade.php            the password page
 resources/css/dev-lock.css                    fallback styles, inlined when Vite cannot resolve
 lang/{en,nl}/messages.php                     translations
 resources/boost/skills/.../SKILL.md           bundled Laravel Boost skill (ships to consumers)
 ```
 
-Namespaces: `Statikbe\StatikDevLock\` → `src/`, `Statikbe\StatikDevLock\Tests\` → `tests/`.
+Namespaces: `Statikbe\DevLock\` → `src/`, `Statikbe\DevLock\Tests\` → `tests/`.
 
-Config namespace is `statik-dev-lock`; env vars are prefixed `STATIK_DEV_LOCK_`. Publish tags are
-`statik-dev-lock` plus `-config`, `-views`, `-lang`, `-css`.
+Config namespace is `dev-lock`; env vars are prefixed `DEV_LOCK_`. Publish tags are
+`dev-lock` plus `-config`, `-views`, `-lang`, `-css`.
 
 ## Behaviour That Constrains Changes
 
@@ -99,7 +99,7 @@ Add a new dev-only file at the root and it ships unless you add it there too. Ve
 git archive --format=tar HEAD | tar -tf - | grep -v '/$'
 ```
 
-`resources/boost/skills/statik-dev-lock-development/SKILL.md` **does** ship, and must keep valid
+`resources/boost/skills/dev-lock-development/SKILL.md` **does** ship, and must keep valid
 YAML frontmatter with `name` and `description` — Boost skips a malformed skill without warning, so
 `tests/Feature/BoostSkillTest.php` asserts the contract. Update the skill when public behaviour,
 config keys, publish tags, or README guidance change.
@@ -120,7 +120,7 @@ just `{!! $styles !!}` — no conditional in the template.
 The fallback inlines `resources/css/dev-lock.css`, and the Tailwind classes in the markup go inert.
 That stylesheet works from element selectors plus `#dev-lock-card`, `#dev-access-heading` and
 `#dev-lock-note`, so **keep those ids on the markup** — they are the fallback's only hooks. A copy
-published with `statik-dev-lock-css` to `resources/css/vendor/statik-dev-lock/dev-lock.css` wins over
+published with `dev-lock-css` to `resources/css/vendor/dev-lock/dev-lock.css` wins over
 the packaged one, the way published views do. It is inlined rather than linked because a file under
 the package's `resources/` is not web accessible without publishing into the host app's `public/`.
 

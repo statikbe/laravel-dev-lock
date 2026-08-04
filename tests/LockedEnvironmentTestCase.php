@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Statikbe\StatikDevLock\Tests;
+namespace Statikbe\DevLock\Tests;
 
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Application;
 use Illuminate\Routing\Router;
-use Statikbe\StatikDevLock\Http\Middleware\StatikDevLockMiddleware;
+use Statikbe\DevLock\Http\Middleware\DevLockMiddleware;
 
 /**
  * A Testbench app with the lock switched on, so the dev.lock routes are registered.
@@ -30,7 +30,7 @@ abstract class LockedEnvironmentTestCase extends TestCase
      */
     protected function lockWebGroup(): void
     {
-        $this->app->make(HttpKernel::class)->appendMiddlewareToGroup('web', StatikDevLockMiddleware::class);
+        $this->app->make(HttpKernel::class)->appendMiddlewareToGroup('web', DevLockMiddleware::class);
     }
 
     /**
@@ -38,7 +38,7 @@ abstract class LockedEnvironmentTestCase extends TestCase
      */
     protected function lockGlobally(): void
     {
-        $this->app->make(HttpKernel::class)->pushMiddleware(StatikDevLockMiddleware::class);
+        $this->app->make(HttpKernel::class)->pushMiddleware(DevLockMiddleware::class);
     }
 
     /**
@@ -50,9 +50,9 @@ abstract class LockedEnvironmentTestCase extends TestCase
             'app.key' => 'base64:'.base64_encode(random_bytes(32)),
             'session.driver' => 'array',
             'cache.default' => 'array',
-            'statik-dev-lock.dev_enabled' => true,
-            'statik-dev-lock.dev_password' => self::PASSWORD,
-            'statik-dev-lock.dev_whitelist_ips' => [self::WHITELISTED_IP],
+            'dev-lock.dev_enabled' => true,
+            'dev-lock.dev_password' => self::PASSWORD,
+            'dev-lock.dev_whitelist_ips' => [self::WHITELISTED_IP],
         ]);
     }
 

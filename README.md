@@ -1,13 +1,13 @@
 <div align="center">
-    <h1>Laravel Statik Dev Lock</h1>
+    <h1>Laravel Dev Lock</h1>
 </div>
 
 <p align="center">
-    <a href="https://packagist.org/packages/statikbe/statik-dev-lock"><img src="https://img.shields.io/packagist/v/statikbe/statik-dev-lock.svg?style=flat-square" alt="Packagist"></a>
-    <a href="https://packagist.org/packages/statikbe/statik-dev-lock"><img src="https://img.shields.io/packagist/php-v/statikbe/statik-dev-lock.svg?style=flat-square" alt="PHP from Packagist"></a>
-    <a href="https://packagist.org/packages/statikbe/statik-dev-lock"><img src="https://badge.laravel.cloud/badge/statikbe/statik-dev-lock?style=flat" alt="Laravel versions"></a>
-    <a href="https://github.com/statikbe/laravel-statik-dev-lock/actions"><img alt="GitHub Workflow Status (main)" src="https://img.shields.io/github/actions/workflow/status/statikbe/laravel-statik-dev-lock/tests.yml?branch=main&label=Tests&style=flat-square"></a>
-    <a href="https://packagist.org/packages/statikbe/statik-dev-lock"><img src="https://img.shields.io/packagist/dt/statikbe/statik-dev-lock.svg?style=flat-square" alt="Total Downloads"></a>
+    <a href="https://packagist.org/packages/statikbe/laravel-dev-lock"><img src="https://img.shields.io/packagist/v/statikbe/laravel-dev-lock.svg?style=flat-square" alt="Packagist"></a>
+    <a href="https://packagist.org/packages/statikbe/laravel-dev-lock"><img src="https://img.shields.io/packagist/php-v/statikbe/laravel-dev-lock.svg?style=flat-square" alt="PHP from Packagist"></a>
+    <a href="https://packagist.org/packages/statikbe/laravel-dev-lock"><img src="https://badge.laravel.cloud/badge/statikbe/laravel-dev-lock?style=flat" alt="Laravel versions"></a>
+    <a href="https://github.com/statikbe/laravel-dev-lock/actions"><img alt="GitHub Workflow Status (main)" src="https://img.shields.io/github/actions/workflow/status/statikbe/laravel-dev-lock/tests.yml?branch=main&label=Tests&style=flat-square"></a>
+    <a href="https://packagist.org/packages/statikbe/laravel-dev-lock"><img src="https://img.shields.io/packagist/dt/statikbe/laravel-dev-lock.svg?style=flat-square" alt="Total Downloads"></a>
 </p>
 
 Password protects environments that should not be publicly reachable — staging, acceptance, a client preview — without touching `.htaccess`, basic auth or your web server config.
@@ -41,17 +41,17 @@ constraints, on Linux and Windows, in both `prefer-lowest` and `prefer-stable` l
 Install the package via Composer:
 
 ```bash
-composer require statikbe/statik-dev-lock
+composer require statikbe/laravel-dev-lock
 ```
 
 Register the middleware on the `web` group in `bootstrap/app.php`:
 
 ```php
 use Illuminate\Foundation\Configuration\Middleware;
-use Statikbe\StatikDevLock\Http\Middleware\StatikDevLockMiddleware;
+use Statikbe\DevLock\Http\Middleware\DevLockMiddleware;
 
 ->withMiddleware(function (Middleware $middleware): void {
-    $middleware->appendToGroup('web', StatikDevLockMiddleware::class);
+    $middleware->appendToGroup('web', DevLockMiddleware::class);
 })
 ```
 
@@ -63,7 +63,7 @@ moved to the slim skeleton — append it to the same group there instead:
 protected $middlewareGroups = [
     'web' => [
         // ... the rest of the group
-        \Statikbe\StatikDevLock\Http\Middleware\StatikDevLockMiddleware::class,
+        \Statikbe\DevLock\Http\Middleware\DevLockMiddleware::class,
     ],
 ];
 ```
@@ -78,34 +78,34 @@ protected $middlewareGroups = [
 Then set the environment variables on the environments you want locked:
 
 ```dotenv
-STATIK_DEV_LOCK_ENABLED=true
-STATIK_DEV_LOCK_PASSWORD="a long password you can share with the client"
+DEV_LOCK_ENABLED=true
+DEV_LOCK_PASSWORD="a long password you can share with the client"
 ```
 
-That is all. The lock is off by default, so nothing changes on environments that do not set `STATIK_DEV_LOCK_ENABLED`.
+That is all. The lock is off by default, so nothing changes on environments that do not set `DEV_LOCK_ENABLED`.
 
 ## Configuration
 
 | Env variable | Config key | Default | Description |
 | --- | --- | --- | --- |
-| `STATIK_DEV_LOCK_ENABLED` | `dev_enabled` | `false` | Switches the lock on. While it is off, requests pass through and the password routes are not even registered. |
-| `STATIK_DEV_LOCK_PASSWORD` | `dev_password` | `null` | The password visitors have to enter. There is no default on purpose — see below. |
-| `STATIK_DEV_LOCK_WHITELIST_IPS` | `dev_whitelist_ips` | `['127.0.0.1', 'localhost']` | IPs that never see the form. An array, or a comma separated string: `STATIK_DEV_LOCK_WHITELIST_IPS="1.2.3.4,5.6.7.8"`. |
+| `DEV_LOCK_ENABLED` | `dev_enabled` | `false` | Switches the lock on. While it is off, requests pass through and the password routes are not even registered. |
+| `DEV_LOCK_PASSWORD` | `dev_password` | `null` | The password visitors have to enter. There is no default on purpose — see below. |
+| `DEV_LOCK_WHITELIST_IPS` | `dev_whitelist_ips` | `['127.0.0.1', 'localhost']` | IPs that never see the form. An array, or a comma separated string: `DEV_LOCK_WHITELIST_IPS="1.2.3.4,5.6.7.8"`. |
 | — | `dev_skip_patterns` | `['up', 'api/*']` | Paths that stay reachable while the lock is on. Matched with `Request::is()`, so wildcards work. |
-| `STATIK_DEV_LOCK_VITE_ENTRYPOINT` | `dev_vite_entrypoint` | `'resources/css/app.css'` | The compiled CSS used to style the password page. Point it at the entrypoint your app builds, or set it to `null` to always use the package's own stylesheet. |
+| `DEV_LOCK_VITE_ENTRYPOINT` | `dev_vite_entrypoint` | `'resources/css/app.css'` | The compiled CSS used to style the password page. Point it at the entrypoint your app builds, or set it to `null` to always use the package's own stylesheet. |
 
-Config keys live under the `statik-dev-lock` namespace, so `dev_enabled` is
-`config('statik-dev-lock.dev_enabled')`.
+Config keys live under the `dev-lock` namespace, so `dev_enabled` is
+`config('dev-lock.dev_enabled')`.
 
 > [!WARNING]
-> Enabling the lock without setting `STATIK_DEV_LOCK_PASSWORD` fails closed: every protected
+> Enabling the lock without setting `DEV_LOCK_PASSWORD` fails closed: every protected
 > request gets a `503` telling you the password is missing. It never renders a form nobody can
 > get past, and it never lets requests through.
 
 Publish the config file to change the skipped paths:
 
 ```bash
-php artisan vendor:publish --tag="statik-dev-lock-config"
+php artisan vendor:publish --tag="dev-lock-config"
 ```
 
 ## How it works
@@ -130,27 +130,27 @@ The page is styled with Tailwind utility classes and your app's compiled CSS. Wi
 
 ```css
 /* resources/css/app.css */
-@source '../../vendor/statikbe/statik-dev-lock/resources/views';
+@source '../../vendor/statikbe/laravel-dev-lock/resources/views';
 ```
 
 Building a different entrypoint? Point the config at it instead of publishing anything:
 
 ```dotenv
-STATIK_DEV_LOCK_VITE_ENTRYPOINT="resources/css/site.css"
+DEV_LOCK_VITE_ENTRYPOINT="resources/css/site.css"
 ```
 
-**If your app has no Vite build, the page still works.** The lock gates every request, so a page that cannot render would leave you with no way into the environment. Rather than calling `@vite` in the view, the middleware resolves your compiled CSS and inlines the package's own `resources/css/dev-lock.css` when it cannot — which covers an app that does not use Vite at all, a deploy where the frontend build never ran, and an entrypoint that is not in the manifest. The fallback page is plain but fully usable, and nothing needs publishing to get it. Set `STATIK_DEV_LOCK_VITE_ENTRYPOINT=null` to skip Vite entirely and always use it.
+**If your app has no Vite build, the page still works.** The lock gates every request, so a page that cannot render would leave you with no way into the environment. Rather than calling `@vite` in the view, the middleware resolves your compiled CSS and inlines the package's own `resources/css/dev-lock.css` when it cannot — which covers an app that does not use Vite at all, a deploy where the frontend build never ran, and an entrypoint that is not in the manifest. The fallback page is plain but fully usable, and nothing needs publishing to get it. Set `DEV_LOCK_VITE_ENTRYPOINT=null` to skip Vite entirely and always use it.
 
 To restyle the fallback, publish the stylesheet and edit it — the middleware prefers your copy over the packaged one:
 
 ```bash
-php artisan vendor:publish --tag="statik-dev-lock-css"
+php artisan vendor:publish --tag="dev-lock-css"
 ```
 
 Prefer your own markup? Publish the view and edit it:
 
 ```bash
-php artisan vendor:publish --tag="statik-dev-lock-views"
+php artisan vendor:publish --tag="dev-lock-views"
 ```
 
 If you do, keep the `dev-lock-card`, `dev-access-heading` and `dev-lock-note` ids — they are the only hooks the fallback stylesheet has.
@@ -158,31 +158,31 @@ If you do, keep the `dev-lock-card`, `dev-access-heading` and `dev-lock-note` id
 The page ships with English and Dutch translations. Publish them to change the wording:
 
 ```bash
-php artisan vendor:publish --tag="statik-dev-lock-lang"
+php artisan vendor:publish --tag="dev-lock-lang"
 ```
 
 Or publish everything at once:
 
 ```bash
-php artisan vendor:publish --tag="statik-dev-lock"
+php artisan vendor:publish --tag="dev-lock"
 ```
 
 ## Replacing your own dev lock
 
 Plenty of apps already carry a copy of this lock in their own namespace, usually as
-`app/Http/Middleware/StatikDevLockMiddleware.php` with a `resources/views/dev-lock.blade.php` and a
+`app/Http/Middleware/DevLockMiddleware.php` with a `resources/views/dev-lock.blade.php` and a
 pair of `dev.lock` routes in `routes/web.php`. Find them before registering the package one — the
 two classes are indistinguishable at a glance in `bootstrap/app.php`:
 
 ```bash
-grep -rn "statik_dev_authenticated\|dev\.lock\|DevLock" app bootstrap config routes resources tests
+grep -rn "dev_lock_authenticated\|dev\.lock\|DevLock" app bootstrap config routes resources tests
 ```
 
 **Publish this package's config before you delete the app's own**, so the existing settings have
 somewhere to go:
 
 ```bash
-php artisan vendor:publish --tag="statik-dev-lock-config"
+php artisan vendor:publish --tag="dev-lock-config"
 ```
 
 Then move each setting across. All but one key is env driven, so most of this is `.env` work — but
@@ -191,16 +191,16 @@ paths your old lock exempted:
 
 | Your old setting | Moves to | Where |
 | --- | --- | --- |
-| on/off flag | `dev_enabled` | `STATIK_DEV_LOCK_ENABLED` |
-| the password | `dev_password` | `STATIK_DEV_LOCK_PASSWORD` |
-| allowed / whitelisted IPs | `dev_whitelist_ips` | `STATIK_DEV_LOCK_WHITELIST_IPS`, or the config array |
+| on/off flag | `dev_enabled` | `DEV_LOCK_ENABLED` |
+| the password | `dev_password` | `DEV_LOCK_PASSWORD` |
+| allowed / whitelisted IPs | `dev_whitelist_ips` | `DEV_LOCK_WHITELIST_IPS`, or the config array |
 | excluded / skipped paths | `dev_skip_patterns` | the published config only |
 
 An app that also exempted a webhook or callback URL drops back to the `['up', 'api/*']` default
 without an error, so carry those over explicitly:
 
 ```php
-// config/statik-dev-lock.php
+// config/dev-lock.php
 'dev_skip_patterns' => [
     'up',
     'api/*',
@@ -209,19 +209,19 @@ without an error, so carry those over explicitly:
 ```
 
 Now delete the app copies, point the middleware registration at
-`Statikbe\StatikDevLock\Http\Middleware\StatikDevLockMiddleware`, rename the old env variables to
-`STATIK_DEV_LOCK_*` in `.env`, `.env.example` and your deploy templates, and run
+`Statikbe\DevLock\Http\Middleware\DevLockMiddleware`, rename the old env variables to
+`DEV_LOCK_*` in `.env`, `.env.example` and your deploy templates, and run
 `php artisan optimize:clear` so cached routes and config stop resurrecting the deleted class.
 
 Three things to watch:
 
 - `resources/views/dev-lock.blade.php` is not this package's published view — publishing writes to
-  `resources/views/vendor/statik-dev-lock/`, so a file directly under `resources/views` is the app's
+  `resources/views/vendor/dev-lock/`, so a file directly under `resources/views` is the app's
   own and can go.
 - App-local `/__dev-lock` routes collide with the package's on both URI and name, and which one
   answers depends on registration order. Remove them rather than reason about the order.
 - Once you have ported your values, do not re-run `vendor:publish` with `--force` for the config
-  tag — it overwrites `config/statik-dev-lock.php` with the package defaults and takes the ported
+  tag — it overwrites `config/dev-lock.php` with the package defaults and takes the ported
   skip patterns with it. And keep the password in the environment, never in the published file.
 
 The bundled Boost skill walks an agent through exactly this — see below.
@@ -229,7 +229,7 @@ The bundled Boost skill walks an agent through exactly this — see below.
 ## AI agents (Laravel Boost)
 
 The package ships a [Laravel Boost](https://github.com/laravel/boost) skill,
-`statik-dev-lock-development`, at `resources/boost/skills/`. It teaches an agent how to adopt the
+`dev-lock-development`, at `resources/boost/skills/`. It teaches an agent how to adopt the
 package: registering the middleware on the `web` group, the env variables, the publish tags, the
 Tailwind `@source` line, and replacing an app's own dev lock.
 
@@ -240,7 +240,7 @@ composer require laravel/boost --dev
 php artisan boost:install
 ```
 
-Pick your agents when prompted, and select `statikbe/statik-dev-lock` at *"Which third-party AI
+Pick your agents when prompted, and select `statikbe/laravel-dev-lock` at *"Which third-party AI
 guidelines/skills would you like to install?"*. To refresh only the skills on a project that
 already uses Boost:
 
@@ -248,7 +248,7 @@ already uses Boost:
 php artisan boost:install --skills
 ```
 
-Boost copies the skill to `.ai/skills/statik-dev-lock-development` and links it into each agent's
+Boost copies the skill to `.ai/skills/dev-lock-development` and links it into each agent's
 skills directory — `.claude/skills/` for Claude Code, and the equivalent for Codex, Cursor, Copilot,
 Gemini, Junie, Amp and OpenCode. Commit those files so the whole team's agents pick the skill up.
 
@@ -256,7 +256,7 @@ Not interested? Exclude it by name in the app's `config/boost.php`:
 
 ```php
 'skills' => [
-    'exclude' => ['statik-dev-lock-development'],
+    'exclude' => ['dev-lock-development'],
 ],
 ```
 
@@ -266,7 +266,7 @@ Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed re
 
 ## Contributing
 
-Thank you for considering contributing to Laravel Statik Dev Lock! Please review our [contributing guide](.github/CONTRIBUTING.md) to get started.
+Thank you for considering contributing to Laravel Dev Lock! Please review our [contributing guide](.github/CONTRIBUTING.md) to get started.
 
 ## Security Vulnerabilities
 
@@ -274,9 +274,9 @@ Please review [our security policy](.github/SECURITY.md) on how to report securi
 
 ## Credits
 
-- [Kristof](https://github.com/statikbe)
+- [statikbe](https://github.com/statikbe)
 - [All Contributors](../../contributors)
 
 ## License
 
-Laravel Statik Dev Lock is open-sourced software licensed under the [MIT license](LICENSE.md).
+Laravel Dev Lock is open-sourced software licensed under the [MIT license](LICENSE.md).

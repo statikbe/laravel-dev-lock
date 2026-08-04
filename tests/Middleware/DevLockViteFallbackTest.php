@@ -34,7 +34,7 @@ it('renders the password form when vite has no manifest', function () {
     $this->get(route('dev.lock'))
         ->assertStatus(401)
         ->assertSee('Restrict Access')
-        ->assertSee('name="statik_dev_password"', escape: false)
+        ->assertSee('name="dev_lock_password"', escape: false)
         ->assertSee('<style>', escape: false)
         ->assertDontSee('<link rel="stylesheet"', escape: false);
 });
@@ -45,7 +45,7 @@ it('keeps a locked environment reachable when vite has no manifest', function ()
     ]));
 
     $this->post(route('dev.lock.submit'), [
-        'statik_dev_password' => 'wrong-password',
+        'dev_lock_password' => 'wrong-password',
     ])->assertRedirect(route('dev.lock'));
 });
 
@@ -90,12 +90,12 @@ it('falls back when vite throws for a reason other than a missing manifest', fun
 
     $this->get(route('dev.lock'))
         ->assertStatus(401)
-        ->assertSee('name="statik_dev_password"', escape: false)
+        ->assertSee('name="dev_lock_password"', escape: false)
         ->assertSee('<style>', escape: false);
 });
 
 it('prefers a published stylesheet over the packaged one', function () {
-    $published = resource_path('css/vendor/statik-dev-lock/dev-lock.css');
+    $published = resource_path('css/vendor/dev-lock/dev-lock.css');
 
     @mkdir(dirname($published), recursive: true);
     file_put_contents($published, 'body { content: "published override"; }');
@@ -111,11 +111,11 @@ it('prefers a published stylesheet over the packaged one', function () {
 });
 
 it('defaults the entrypoint to the conventional laravel one', function () {
-    expect(config('statik-dev-lock.dev_vite_entrypoint'))->toBe('resources/css/app.css');
+    expect(config('dev-lock.dev_vite_entrypoint'))->toBe('resources/css/app.css');
 });
 
 it('passes the configured entrypoint to vite', function () {
-    config()->set('statik-dev-lock.dev_vite_entrypoint', 'resources/css/site.css');
+    config()->set('dev-lock.dev_vite_entrypoint', 'resources/css/site.css');
 
     $this->swap(Vite::class, new class extends Vite
     {
@@ -137,7 +137,7 @@ it('passes the configured entrypoint to vite', function () {
 });
 
 it('skips vite entirely when the entrypoint is emptied', function (mixed $entrypoint) {
-    config()->set('statik-dev-lock.dev_vite_entrypoint', $entrypoint);
+    config()->set('dev-lock.dev_vite_entrypoint', $entrypoint);
 
     // Proven by the fallback winning over a Vite that would otherwise have resolved.
     $this->swap(Vite::class, fakeVite('/build/assets/should-not-be-used.css'));

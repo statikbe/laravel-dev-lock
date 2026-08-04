@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Statikbe\StatikDevLock\Tests\LockedEnvironmentTestCase;
-use Statikbe\StatikDevLock\Tests\TestCase;
+use Statikbe\DevLock\Tests\LockedEnvironmentTestCase;
+use Statikbe\DevLock\Tests\TestCase;
 
 uses(TestCase::class)->in(__DIR__.'/Feature');
 

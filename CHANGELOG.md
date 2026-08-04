@@ -1,63 +1,47 @@
 # Release Notes
 
-## [Unreleased](https://github.com/statikbe/laravel-statik-dev-lock/compare/v0.0.1...main)
-
-### Fixed
-
-- The password page no longer depends on the host app having a built Vite manifest. The view called
-  `@vite('resources/css/app.css')`, which throws when there is no manifest or when the manifest has
-  no such entry — and since the lock gates every request, that turned into a `500` for the whole
-  environment with no way in. The middleware now resolves the compiled CSS itself and inlines
-  `resources/css/dev-lock.css` when it cannot.
-
-### Added
-
-- `dev_vite_entrypoint` config key (`STATIK_DEV_LOCK_VITE_ENTRYPOINT`, default
-  `resources/css/app.css`) for apps that build a different CSS entrypoint. Set it to `null` to skip
-  Vite altogether and always use the package's stylesheet.
-- Publish tag `statik-dev-lock-css` for `resources/css/dev-lock.css`. A copy published to
-  `resources/css/vendor/statik-dev-lock/dev-lock.css` takes precedence over the packaged one.
-
-### Changed
-
-- The password page markup carries `dev-lock-card`, `dev-access-heading` and `dev-lock-note` ids.
-  The fallback stylesheet styles the page through them, since the Tailwind classes are inert
-  without a build — keep them on a published view.
-
-
-## [v0.0.1](https://github.com/statikbe/laravel-statik-dev-lock/releases/tag/v0.0.1) - 2026-08-04
+## [v0.0.1](https://github.com/statikbe/laravel-dev-lock/releases/tag/v0.0.1) - 2026-08-04
 
 First pre-release. Password protects environments that should not be publicly reachable
 (staging, acceptance, client preview) without an `.htaccess` file or server level basic auth.
 
 ### Added
 
-- `Statikbe\StatikDevLock\Http\Middleware\StatikDevLockMiddleware`, the package's entire public
-  surface. Register it on the `web` middleware group; it gates every request behind a password
-  form until the visitor unlocks the environment.
-- `config/statik-dev-lock.php` with four keys, all env driven: `dev_enabled`
-  (`STATIK_DEV_LOCK_ENABLED`), `dev_password` (`STATIK_DEV_LOCK_PASSWORD`), `dev_whitelist_ips`
-  (`STATIK_DEV_LOCK_WHITELIST_IPS`, defaults to `127.0.0.1` and `localhost`) and
-  `dev_skip_patterns` (defaults to `up` and `api/*`, matched with `Request::is()`).
+- `Statikbe\DevLock\Http\Middleware\DevLockMiddleware`, the package's entire public surface.
+  Register it on the `web` middleware group; it gates every request behind a password form until
+  the visitor unlocks the environment.
+- `config/dev-lock.php` with five keys, four of them env driven: `dev_enabled`
+  (`DEV_LOCK_ENABLED`), `dev_password` (`DEV_LOCK_PASSWORD`), `dev_whitelist_ips`
+  (`DEV_LOCK_WHITELIST_IPS`, defaults to `127.0.0.1` and `localhost`), `dev_skip_patterns`
+  (defaults to `up` and `api/*`, matched with `Request::is()`, config only) and
+  `dev_vite_entrypoint` (`DEV_LOCK_VITE_ENTRYPOINT`, defaults to `resources/css/app.css`).
 - Routes `dev.lock` (GET `/__dev-lock`) and `dev.lock.submit` (POST), registered in the `web`
   group and only while the lock is enabled.
-- A Tailwind password page, `statik-dev-lock::dev-lock`, and English and Dutch translations.
-- Publish tags `statik-dev-lock`, `statik-dev-lock-config`, `statik-dev-lock-views` and
-  `statik-dev-lock-lang`.
-- A bundled Laravel Boost skill, `statik-dev-lock-development`, that walks a consuming app
-  through adoption and through replacing its own hand-rolled dev lock with this package.
+- A Tailwind password page, `dev-lock::dev-lock`, and English and Dutch translations.
+- Publish tags `dev-lock`, `dev-lock-config`, `dev-lock-views`, `dev-lock-lang` and
+  `dev-lock-css`. A stylesheet published to `resources/css/vendor/dev-lock/dev-lock.css` takes
+  precedence over the packaged one.
+- A bundled Laravel Boost skill, `dev-lock-development`, that walks a consuming app through
+  adoption and through replacing its own hand-rolled dev lock with this package.
 
 ### Behaviour worth knowing
 
+- The password page never depends on the host app having a built Vite manifest. The middleware
+  resolves the compiled CSS itself and inlines `resources/css/dev-lock.css` when it cannot, so an
+  app with no build, an unbuilt deploy or a missing manifest entry still gets a form instead of a
+  `500` on every request. Set `dev_vite_entrypoint` to `null` to skip Vite altogether.
+- The page markup carries `dev-lock-card`, `dev-access-heading` and `dev-lock-note` ids. The
+  fallback stylesheet styles the page through them, since the Tailwind classes are inert without a
+  build — keep them on a published view.
 - Failed password attempts are rate limited per IP: 5 attempts, then a 5 minute lockout.
-- Unlocking regenerates the session id before storing `statik_dev_authenticated`, so a session id
+- Unlocking regenerates the session id before storing `dev_lock_authenticated`, so a session id
   planted beforehand cannot become an unlocked one.
 - `?redirect_to=` is only honoured for `http`/`https` URLs on the application's own host;
   anything else lands on `/`.
 - The password form answers `401` with `X-Frame-Options: DENY`,
   `X-Robots-Tag: noindex, nofollow` and a `no-store` `Cache-Control`.
-- Enabling the lock without `STATIK_DEV_LOCK_PASSWORD` fails closed: protected requests get a
-  `503` naming the missing variable instead of a form nothing can pass.
+- Enabling the lock without `DEV_LOCK_PASSWORD` fails closed: protected requests get a `503`
+  naming the missing variable instead of a form nothing can pass.
 - The lock hides an environment. It is not authentication and does not protect user data.
 
 ### Requirements

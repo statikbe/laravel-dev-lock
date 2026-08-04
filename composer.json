@@ -1,16 +1,27 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "statikbe/statik-dev-lock",
+    "name": "statikbe/laravel-dev-lock",
     "description": "Middleware to lock project without use of htaccess",
     "keywords": [
         "laravel",
         "statikbe",
-        "statik-dev-lock",
+        "dev-lock",
+
         "middleware"
     ],
-    "homepage": "https://github.com/statikbe/laravel-statik-dev-lock",
+    "homepage": "https://github.com/statikbe/laravel-dev-lock",
     "license": "MIT",
     "authors": [
+        {
+          "name": "Aurel",
+          "email": "aurel@statik.be",
+          "role": "Developer"
+        },
+        {
+          "name": "Sten",
+          "email": "sten@statik.be",
+          "role": "Developer"
+        },
         {
             "name": "Kristof",
             "email": "kristof@statik.be",
@@ -32,12 +43,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Statikbe\\StatikDevLock\\": "src/"
+            "Statikbe\\DevLock\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Statikbe\\StatikDevLock\\Tests\\": "tests/"
+            "Statikbe\\DevLock\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -76,7 +87,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Statikbe\\StatikDevLock\\StatikDevLockServiceProvider"
+                "Statikbe\\DevLock\\DevLockServiceProvider"
             ]
         }
     },
