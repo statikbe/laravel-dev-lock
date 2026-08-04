@@ -1,5 +1,10 @@
 # Release Notes
 
+## [0.0.1](https://github.com/statikbe/laravel-dev-lock/releases/tag/v0.0.1/compare/v0.0.1...0.0.1) - 2026-08-04
+
+<!-- Release notes generated using configuration in .github/release.yml at main -->
+**Full Changelog**: https://github.com/statikbe/laravel-dev-lock/commits/0.0.1
+
 ## [v0.0.1](https://github.com/statikbe/laravel-dev-lock/releases/tag/v0.0.1) - 2026-08-04
 
 First pre-release. Password protects environments that should not be publicly reachable
