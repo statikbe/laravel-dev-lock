@@ -1,6 +1,6 @@
 ---
 name: package-scaffold
-description: "Use this skill when adding Laravel package capabilities or wiring them through the service provider: commands, migrations, routes, config merges, views, translations, assets, middleware, publish tags, workbench files, or console-only behavior."
+description: "Use this skill when adding Laravel package capabilities or wiring them through the service provider: commands, migrations, routes, config merges, views, translations, assets, middleware, publish tags, or console-only behavior."
 license: MIT
 metadata:
   author: laravel
@@ -27,7 +27,7 @@ Add package features in the right place and wire them through the service provid
 2. Put container bindings and `mergeConfigFrom` calls in `register()` when the host app must be able to override configuration.
 3. Put resource loading in boot-time methods with Laravel-native APIs such as `loadRoutesFrom`, `loadViewsFrom`, and `loadTranslationsFrom`.
 4. Guard console-only publishing and command registration with `runningInConsole()` before calling `publishes`, `publishesMigrations`, or `commands`.
-5. Name publish tags with the `:package_slug-*` convention so consumers can target individual resource groups.
+5. Name publish tags with the `statik-dev-lock-*` convention so consumers can target individual resource groups.
 6. Add tests for the observable provider behavior: merged config, loaded routes, publish tags, or command registration.
 
 Provider wiring anti-patterns:
@@ -52,8 +52,8 @@ Provider wiring anti-patterns:
 ## Examples
 
 - Add an Artisan command: create the command class under `src/Console/Commands`, register it in the `commands` array inside the `runningInConsole()` guard, add a feature test for observable console output, and document the command if it is user-facing.
-- Add a publishable migration: place the migration in `database/migrations`, wire it through a console-guarded `publishesMigrations` call with a `:package_slug-migrations` tag, and test publish behavior with Testbench.
-- Wire a new publish tag by adding a `publishes` map inside the existing console-guarded publishing method and naming the tag with `:package_slug-*`.
+- Add a publishable migration: place the migration in `database/migrations`, wire it through a console-guarded `publishesMigrations` call with a `statik-dev-lock-migrations` tag, and test publish behavior with Testbench.
+- Wire a new publish tag by adding a `publishes` map inside the existing console-guarded publishing method and naming the tag with `statik-dev-lock-*`.
 
 ## Anti-Patterns
 

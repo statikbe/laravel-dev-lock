@@ -3,6 +3,9 @@ parameters:
     paths:
         - src
         - config
-        - database
         - routes
     tmpDir: build/phpstan
+    # Larastan resolves the config directory from a booted application by default, which a
+    # package has none of; without this it flags the legitimate env() calls in config/.
+    configDirectories:
+        - %currentWorkingDirectory%/config

@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace VendorName\Skeleton\Tests;
+namespace Statikbe\StatikDevLock\Tests;
 
 use Orchestra\Testbench\TestCase as Orchestra;
-use VendorName\Skeleton\SkeletonServiceProvider;
+use Statikbe\StatikDevLock\StatikDevLockServiceProvider;
 
 abstract class TestCase extends Orchestra
 {
     protected function getPackageProviders($app): array
     {
         return [
-            SkeletonServiceProvider::class,
+            StatikDevLockServiceProvider::class,
         ];
     }
 }

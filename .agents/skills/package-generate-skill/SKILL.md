@@ -50,6 +50,6 @@ Keep the package's bundled Boost skill accurate, concise, and focused on helping
 ## Anti-Patterns
 
 - Regenerating the Boost skill from documentation alone without checking implementation.
-- Documenting private classes, test helpers, workbench-only routes, or implementation details as consumer API.
+- Documenting private classes, test helpers, test-only routes, or implementation details as consumer API.
 - Adding speculative examples for features the package does not provide.
 - Removing package metadata that consuming agents need to identify and apply the skill.

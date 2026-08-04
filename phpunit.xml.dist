@@ -22,8 +22,8 @@
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
-        <testsuite name="Unit">
-            <directory>tests/Unit</directory>
+        <testsuite name="Middleware">
+            <directory>tests/Middleware</directory>
         </testsuite>
     </testsuites>
     <source>
