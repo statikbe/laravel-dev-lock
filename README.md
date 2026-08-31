@@ -21,20 +21,26 @@ The whole package is one middleware. Turn it on with an env variable, add it to 
 
 ## Requirements
 
-|         | Supported | Covered by CI |
-|---------|-----------|---------------|
-| PHP     | 8.3+      | 8.3, 8.4, 8.5 |
-| Laravel | 12, 13    | 12, 13        |
+|         | Supported  | Covered by CI |
+|---------|------------|---------------|
+| PHP     | 8.3+       | 8.3, 8.4, 8.5 |
+| Laravel | 11, 12, 13 | 11, 12, 13    |
 
-Everything the package claims is proven on every push: the matrix is exactly its Composer
-constraints, on Linux and Windows, in both `prefer-lowest` and `prefer-stable` lanes.
+Everything the package claims is proven on every push: the matrix is its Composer constraints, on
+Linux and Windows, in both `prefer-lowest` and `prefer-stable` lanes. The single exception is
+Laravel 11 on PHP 8.5, which the matrix skips — that branch predates 8.5 and will not be patched
+for it.
+
+> [!WARNING]
+> Laravel 11 is supported, but it is past its security-support window: every release in that branch
+> carries an advisory that will not be patched
+> ([CVE-2026-48019](https://github.com/laravel/framework/security/advisories/GHSA-5vg9-5847-vvmq)),
+> so Composer refuses to install one unless `--no-security-blocking` is passed. Locking an
+> environment does not make an unpatched framework safe — treat this as a way to keep existing
+> Laravel 11 apps protected while they are being upgraded, not as a reason to stay.
 
 > [!NOTE]
-> Laravel 10 and 11 are deliberately out of scope. Both branches are past their security-support
-> window and every release in them carries an advisory that will not be patched
-> ([CVE-2026-48019](https://github.com/laravel/framework/security/advisories/GHSA-5vg9-5847-vvmq)),
-> so Composer refuses to install them without disabling its advisory policy. On those versions,
-> upgrade the app rather than the lock.
+> Laravel 10 remains out of scope.
 
 ## Installation
 

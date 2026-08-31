@@ -23,9 +23,20 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         php: [8.3, 8.4, 8.5]
-        laravel: [12.*, 13.*]
+        laravel: [11.*, 12.*, 13.*]
         stability: [prefer-lowest, prefer-stable]
+        exclude:
+          # Laravel 11 predates PHP 8.5 and is past security support, so it will never
+          # get a compatibility patch for it. The package itself supports 8.3+ on every
+          # other branch.
+          - laravel: 11.*
+            php: 8.5
         include:
+          - laravel: 11.*
+            testbench: 9.*
+            # Every Laravel 11 release carries an advisory that will not be patched, so
+            # Composer refuses to install one until its blocking policy is switched off.
+            composer-flags: --no-security-blocking
           - laravel: 12.*
             testbench: 10.*
           - laravel: 13.*
@@ -46,10 +57,19 @@ jobs:
           tools: composer:v2
           coverage: none
 
+      # laravel/pao is an agent-friendly output formatter for the test tooling. It declares
+      # `conflict: laravel/framework <12.0.0`, which no Laravel 11 resolution can satisfy. It is
+      # a dev-only convenience and is not referenced anywhere in the package, so the Laravel 11
+      # lane simply drops it. Consumers are unaffected either way: require-dev is never installed
+      # for them.
+      - name: Drop the agent output formatter on Laravel 11
+        if: matrix.laravel == '11.*'
+        run: composer remove laravel/pao --dev --no-update --no-interaction
+
       - name: Install dependencies
         run: |
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
-          composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress --no-scripts
+          composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress --no-scripts ${{ matrix.composer-flags }}
           composer run prepare
 
       - name: PHPStan
