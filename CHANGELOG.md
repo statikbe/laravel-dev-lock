@@ -1,5 +1,9 @@
 # Release Notes
 
+## [v0.0.2](https://github.com/statikbe/laravel-dev-lock/releases/tag/v0.0.1/compare/0.0.1...v0.0.2) - 2026-08-31
+
+- Add support for laravel 11.
+
 ## [0.0.1](https://github.com/statikbe/laravel-dev-lock/releases/tag/v0.0.1/compare/v0.0.1...0.0.1) - 2026-08-04
 
 <!-- Release notes generated using configuration in .github/release.yml at main -->
