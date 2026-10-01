@@ -54,6 +54,44 @@ it('shows the password form with hardened headers', function () {
         ->toContain('max-age=0');
 });
 
+it('gives password managers a sign-in form to recognise', function () {
+    $this->get(route('dev.lock'))
+        ->assertStatus(401)
+        ->assertSee('autocomplete="username"', escape: false)
+        ->assertSee('autocomplete="current-password"', escape: false)
+        ->assertSee('name="dev_lock_username"', escape: false)
+        ->assertSee('value="dev"', escape: false);
+});
+
+it('fills the hidden username field from the config', function () {
+    config()->set('dev-lock.dev_username', 'statik');
+
+    $this->get(route('dev.lock'))
+        ->assertStatus(401)
+        ->assertSee('value="statik"', escape: false);
+});
+
+it('hides the username field with a style, never with type="hidden"', function () {
+    $response = $this->get(route('dev.lock'))->assertStatus(401);
+
+    preg_match('/<input[^>]*id="dev_lock_username"[^>]*>/', (string) $response->getContent(), $field);
+
+    // A password manager skips type="hidden" inputs, so this one has to stay a text
+    // input that CSS hides. Inline, because the page's stylesheet is not guaranteed.
+    expect($field[0] ?? '')
+        ->toContain('type="text"')
+        ->toContain('style="display: none"');
+});
+
+it('ignores whatever a password manager autofilled into the username field', function () {
+    $this->post(route('dev.lock.submit'), [
+        'dev_lock_username' => 'not-the-configured-username',
+        'dev_lock_password' => LockedEnvironmentTestCase::PASSWORD,
+    ])
+        ->assertRedirect('/')
+        ->assertSessionHas('dev_lock_authenticated', true);
+});
+
 it('unlocks the session and returns the visitor to their destination on the correct password', function () {
     $this->post(route('dev.lock.submit', ['redirect_to' => 'http://localhost/dashboard']), [
         'dev_lock_password' => LockedEnvironmentTestCase::PASSWORD,

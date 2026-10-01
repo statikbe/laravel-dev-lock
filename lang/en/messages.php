@@ -3,6 +3,7 @@
 return [
     'dev_lock' => [
         'title' => 'Restrict Access',
+        'username' => 'Username',
         'enter_password' => 'Enter password:',
         'access_site' => 'Access Site',
         'site_in_dev_mode' => 'This site is in development mode.',

@@ -96,6 +96,7 @@ That is all. The lock is off by default, so nothing changes on environments that
 | --- | --- | --- | --- |
 | `DEV_LOCK_ENABLED` | `dev_enabled` | `false` | Switches the lock on. While it is off, requests pass through and the password routes are not even registered. |
 | `DEV_LOCK_PASSWORD` | `dev_password` | `null` | The password visitors have to enter. There is no default on purpose — see below. |
+| `DEV_LOCK_USERNAME` | `dev_username` | `'dev'` | Fills the form's hidden username field so password managers can save and autofill the lock. Never validated — see [Password managers](#password-managers). |
 | `DEV_LOCK_WHITELIST_IPS` | `dev_whitelist_ips` | `['127.0.0.1', 'localhost']` | IPs that never see the form. An array, or a comma separated string: `DEV_LOCK_WHITELIST_IPS="1.2.3.4,5.6.7.8"`. |
 | — | `dev_skip_patterns` | `['up', 'api/*']` | Paths that stay reachable while the lock is on. Matched with `Request::is()`, so wildcards work. |
 | `DEV_LOCK_VITE_ENTRYPOINT` | `dev_vite_entrypoint` | `'resources/css/app.css'` | The compiled CSS used to style the password page. Point it at the entrypoint your app builds, or set it to `null` to always use the package's own stylesheet. |
@@ -159,7 +160,17 @@ Prefer your own markup? Publish the view and edit it:
 php artisan vendor:publish --tag="dev-lock-views"
 ```
 
-If you do, keep the `dev-lock-card`, `dev-access-heading` and `dev-lock-note` ids — they are the only hooks the fallback stylesheet has.
+If you do, keep the `dev-lock-card`, `dev-access-heading` and `dev-lock-note` ids — they are the only hooks the fallback stylesheet has. Keep the hidden username field too, for the reason below.
+
+## Password managers
+
+A shared password that has to be typed on every new session is a password people paste from somewhere less safe than a vault, so the form is built to be saved and autofilled: the password input carries `autocomplete="current-password"`, and a hidden username field next to it carries `autocomplete="username"`. Without the username, managers do not read the page as a sign-in form at all and offer neither to save nor to fill it.
+
+The username is presentation only. It is written into the form from `DEV_LOCK_USERNAME`, never read back on submit, and grants nothing on its own — the password is still the only thing that unlocks anything. All it has to do is stay stable, because a manager matches a saved entry on it. It defaults to `dev`.
+
+It is hidden with an inline `display: none` rather than `type="hidden"`: managers skip hidden inputs, and an inline style holds whether the page gets your compiled CSS or the fallback stylesheet.
+
+One thing the package cannot do for you: a saved entry matches on the site's domain. 1Password matches the registrable domain by default, so a single entry covers every subdomain of it — one entry for `example.com` fills on `staging.example.com` and `acceptance.example.com` alike. Hosts under different domains need either an entry each, or one entry with several website fields.
 
 The page ships with English and Dutch translations. Publish them to change the wording:
 
