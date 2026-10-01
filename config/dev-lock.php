@@ -30,6 +30,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Dev Lock Username
+    |--------------------------------------------------------------------------
+    |
+    | Filled into the form's hidden username field. Password managers key a saved
+    | login on a username, so the form carries one even though the lock has no
+    | accounts. It is never validated and grants nothing on its own; it only has
+    | to stay stable, or entries saved against it stop matching.
+    |
+    */
+
+    'dev_username' => env('DEV_LOCK_USERNAME', 'dev'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Whitelisted IPs
     |--------------------------------------------------------------------------
     |

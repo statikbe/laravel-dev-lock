@@ -7,13 +7,14 @@ use Illuminate\Support\ServiceProvider;
 it('merges the package config with a lock that is off and without a default password', function () {
     expect(config('dev-lock.dev_enabled'))->toBeFalse()
         ->and(config('dev-lock.dev_password'))->toBeNull()
+        ->and(config('dev-lock.dev_username'))->toBe('dev')
         ->and(config('dev-lock.dev_skip_patterns'))->toBe(['up', 'api/*'])
         ->and(config('dev-lock.dev_whitelist_ips'))->toBe(['127.0.0.1', 'localhost']);
 });
 
 it('loads the package translations', function () {
     expect(trans('dev-lock::messages.dev_lock'))
-        ->toHaveKeys(['title', 'enter_password', 'access_site', 'site_in_dev_mode', 'api_endpoints_remain', 'not_configured']);
+        ->toHaveKeys(['title', 'username', 'enter_password', 'access_site', 'site_in_dev_mode', 'api_endpoints_remain', 'not_configured']);
 });
 
 it('translates the lock in english and dutch', function () {

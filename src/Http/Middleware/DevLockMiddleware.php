@@ -211,7 +211,23 @@ class DevLockMiddleware
             'error' => session('dev_lock_error'),
             'redirect_to' => $request->query('redirect_to'),
             'styles' => $this->styles(),
+            'username' => $this->configuredUsername(),
         ], 401));
+    }
+
+    /**
+     * The value for the form's hidden username field.
+     *
+     * A password manager keys a saved login on a username and will not treat a form
+     * without one as a sign-in, so the form carries one even though the lock has no
+     * accounts. It is never read back on submit: it decides nothing, it only has to
+     * stay stable or entries saved against it stop matching.
+     */
+    private function configuredUsername(): string
+    {
+        $username = config('dev-lock.dev_username');
+
+        return is_string($username) ? $username : '';
     }
 
     /**

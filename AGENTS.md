@@ -35,7 +35,7 @@ Using the package name in a repo URL silently breaks badges and links. This has 
 ```
 src/DevLockServiceProvider.php          register + boot wiring, publish tags
 src/Http/Middleware/DevLockMiddleware.php   the whole feature
-config/dev-lock.php                    5 keys, all env-driven except dev_skip_patterns
+config/dev-lock.php                    6 keys, all env-driven except dev_skip_patterns
 routes/dev-lock.php                    dev.lock, dev.lock.submit — registered only when enabled
 resources/views/dev-lock.blade.php            the password page
 resources/css/dev-lock.css                    fallback styles, inlined when Vite cannot resolve
@@ -61,6 +61,10 @@ Config namespace is `dev-lock`; env vars are prefixed `DEV_LOCK_`. Publish tags 
   redirect protection; do not loosen it.
 - Failed attempts are rate limited per IP (5 tries, 5 minute lockout), and the session id is
   regenerated on success. Both are security properties with tests behind them.
+- The form carries a hidden username field (`dev_username`) purely so password managers read it as
+  a sign-in and offer to save and fill it. It is never read back on submit, and it must stay a
+  `type="text"` input hidden with an inline `display: none` — managers skip `type="hidden"`, and
+  only an inline style survives both the compiled CSS and the fallback stylesheet.
 
 ## Quality Gates
 

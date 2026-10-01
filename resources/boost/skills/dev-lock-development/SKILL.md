@@ -187,6 +187,8 @@ DEV_LOCK_ENABLED=true
 DEV_LOCK_PASSWORD="a long password you can share with the client"
 # optional, array or comma separated string, defaults to 127.0.0.1 and localhost
 DEV_LOCK_WHITELIST_IPS="1.2.3.4,5.6.7.8"
+# optional, defaults to "dev"; only fills the form's hidden username field for password managers
+DEV_LOCK_USERNAME="dev"
 ```
 
 Never commit a password, and never enable the lock without one: the middleware then answers
@@ -237,7 +239,7 @@ Publish tags: `dev-lock`, `dev-lock-config`, `dev-lock-views`,
 
 Read before executing:
 
-- `config/dev-lock.php` for the five config keys and their env variables
+- `config/dev-lock.php` for the six config keys and their env variables
 - `resources/views/dev-lock.blade.php` for the markup a host app can replace
 - `README.md` for the full behaviour description
 
@@ -252,6 +254,9 @@ Behaviour the app can rely on:
 - `?redirect_to=` only honours `http`/`https` URLs on the app's own host; anything else lands on `/`
 - the password form renders whether or not the app has a Vite build: the middleware inlines the
   package's `resources/css/dev-lock.css` when the compiled CSS cannot be resolved
+- the form is built to be saved and autofilled by a password manager: `autocomplete="current-password"`
+  on the password input, and a hidden username field filled from `DEV_LOCK_USERNAME` (default `dev`)
+  that the middleware never reads back
 
 ## Examples
 
@@ -292,6 +297,10 @@ Behaviour the app can rely on:
 - adding `@vite(...)` to the password view, or dropping the `dev-lock-card` /
   `dev-access-heading` / `dev-lock-note` ids from a published copy: the first can 500 the whole
   locked environment when no manifest exists, the second leaves the fallback with nothing to style
+- dropping the hidden username field from a published view, or turning it into a `type="hidden"`
+  input: password managers skip hidden inputs and will not read the page as a sign-in form without
+  a username, so the lock goes back to being typed by hand on every session
+- validating `dev_lock_username`, or treating it as a second credential: it is presentation only
 - enabling the lock without `DEV_LOCK_PASSWORD`, or hardcoding a password in the config
 - treating the lock as real authentication: it hides an environment, it does not protect user data
 - adding `api/*` routes to the skip patterns and assuming they are protected

@@ -32,6 +32,28 @@
                 class="space-y-6"
             >
                 @csrf
+
+                {{--
+                    A password manager only recognises a sign-in when a username sits next to the
+                    password, so the form carries one even though the lock has no accounts. The
+                    middleware never reads it back; `dev-lock.dev_username` fills it.
+
+                    Hidden with an inline `display: none` rather than `type="hidden"`: managers skip
+                    hidden inputs, and an inline style survives both stylesheets this page can get.
+                --}}
+                <label for="dev_lock_username" style="display: none">
+                    {{ __('dev-lock::messages.dev_lock.username') }}
+                </label>
+                <input
+                    type="text"
+                    id="dev_lock_username"
+                    name="dev_lock_username"
+                    value="{{ $username }}"
+                    autocomplete="username"
+                    tabindex="-1"
+                    style="display: none"
+                />
+
                 <div>
                     <label
                         for="dev_lock_password"
@@ -43,8 +65,10 @@
                         type="password"
                         id="dev_lock_password"
                         name="dev_lock_password"
+                        autocomplete="current-password"
                         required
                         autofocus
+                        enterkeyhint="done"
                         class="w-full rounded-lg border border-gray-300 px-4 py-3 text-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                         placeholder="••••••"
                     />
