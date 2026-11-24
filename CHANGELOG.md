@@ -1,5 +1,29 @@
 # Release Notes
 
+## [1.0.0](https://github.com/statikbe/laravel-dev-lock/compare/0.0.3...1.0.0) - 2026-11-24
+
+### Security
+
+- **Breaking:** `dev_whitelist_ips` now defaults to `[]` instead of `['127.0.0.1', 'localhost']`.
+  Behind a tunnel (`herd share`, Expose, ngrok, cloudflared) or a reverse proxy on the same machine,
+  every visitor arrives from `127.0.0.1`, so the old default let everyone past the lock. If you
+  relied on it, set `DEV_LOCK_WHITELIST_IPS` explicitly — read the README's "IP whitelist" section first.
+- `DEV_LOCK_ENABLED=1`, `on` or `yes` now switch the lock on. Previously only `true` did; anything
+  else left the environment unlocked without warning. Apps with a published `config/dev-lock.php`
+  should apply the same `filter_var(..., FILTER_VALIDATE_BOOLEAN)` cast to `dev_enabled`.
+- Unlocked sessions are tied to the password: changing `DEV_LOCK_PASSWORD` locks everyone out.
+  Every visitor has to enter the password once more after upgrading.
+
+### Fixed
+
+- `DEV_LOCK_WHITELIST_IPS="1.2.3.4, 5.6.7.8"` now whitelists both IPs; spaces after commas are ignored.
+
+### Requirements
+
+- PHP 8.3 or higher
+- Laravel 11, 12 or 13. Laravel 11 is past security support and Composer only installs it with
+  `--no-security-blocking`; it is kept so existing apps stay locked while they are upgraded.
+
 ## [0.0.3](https://github.com/statikbe/laravel-dev-lock/compare/0.0.2...0.0.3) - 2026-10-01
 
 Password managers like 1password are now able to autofill the dev lock password.
