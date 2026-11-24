@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Illuminate\Foundation\Vite;
 use Illuminate\Support\HtmlString;
+use Statikbe\DevLock\Tests\PublishedStylesheetLock;
 
 /**
  * The password form is the only page that can unlock a locked environment, so it has to render
@@ -11,7 +12,14 @@ use Illuminate\Support\HtmlString;
  * these tests the real thing rather than a simulation: without the fallback the request 500s.
  */
 beforeEach(function () {
+    // Every test here renders the inlined stylesheet, and one writes a published override of it.
+    PublishedStylesheetLock::acquire();
+
     $this->lockWebGroup();
+});
+
+afterEach(function () {
+    PublishedStylesheetLock::release();
 });
 
 /**

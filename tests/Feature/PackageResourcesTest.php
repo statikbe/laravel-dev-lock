@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\ServiceProvider;
+use Statikbe\DevLock\Tests\PublishedStylesheetLock;
 
 it('merges the package config with a lock that is off and without a default password', function () {
     expect(config('dev-lock.dev_enabled'))->toBeFalse()
@@ -72,6 +73,8 @@ it('publishes the fallback stylesheet where the middleware looks for it', functi
 it('actually copies the fallback stylesheet when the css tag is published', function () {
     $target = resource_path('css/vendor/dev-lock/dev-lock.css');
 
+    PublishedStylesheetLock::acquire();
+
     try {
         $this->artisan('vendor:publish', ['--tag' => 'dev-lock-css'])->assertSuccessful();
 
@@ -80,6 +83,8 @@ it('actually copies the fallback stylesheet when the css tag is published', func
     } finally {
         // The middleware prefers this copy, so leaving it behind would leak into other tests.
         is_file($target) && unlink($target);
+
+        PublishedStylesheetLock::release();
     }
 });
 
