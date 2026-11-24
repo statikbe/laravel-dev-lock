@@ -11,12 +11,15 @@ behind a shared password, it is not authentication and must not grow into it.
 |           | Supported                                    |
 |-----------|----------------------------------------------|
 | PHP       | 8.3+                                         |
-| Laravel   | 12, 13 (`illuminate/support: ^12.0\|^13.0`)  |
-| Testbench | 10 (L12), 11 (L13)                           |
+| Laravel   | 11, 12, 13 (`illuminate/support: ^11.0\|^12.0\|^13.0`) |
+| Testbench | 9 (L11), 10 (L12), 11 (L13)                  |
 
-Laravel 10 and 11 are deliberately out of scope — past security support, and Composer refuses to
-install them without disabling its advisory policy. CI runs the matrix exactly: PHP 8.3/8.4/8.5 ×
-Laravel 12/13 × `prefer-lowest`/`prefer-stable`, on Linux and Windows.
+Laravel 11 is kept for existing projects that are still being upgraded, even though it is past
+security support and Composer only installs it with `--no-security-blocking` — the README warns
+about this. Laravel 10 is out of scope. CI runs the matrix exactly: PHP 8.3/8.4/8.5 ×
+Laravel 11/12/13 × `prefer-lowest`/`prefer-stable`, on Linux and Windows, except Laravel 11 on
+PHP 8.5, which that branch will never support. `laravel/pao` conflicts with Laravel < 12, so the
+Laravel 11 CI jobs remove it before installing; it is dev-only and never reaches consumers.
 
 `composer.json`, the README requirements table, and the CHANGELOG "Requirements" section must
 agree. Change one, change all three.
@@ -61,6 +64,12 @@ Config namespace is `dev-lock`; env vars are prefixed `DEV_LOCK_`. Publish tags 
   redirect protection; do not loosen it.
 - Failed attempts are rate limited per IP (5 tries, 5 minute lockout), and the session id is
   regenerated on success. Both are security properties with tests behind them.
+- An unlocked session stores an HMAC of the password (keyed with `app.key`), never `true`, so
+  rotating `DEV_LOCK_PASSWORD` revokes every session. Do not go back to a plain flag.
+- `dev_whitelist_ips` defaults to `[]`. A loopback default unlocks the whole environment behind a
+  tunnel or same-host proxy, where every visitor arrives from `127.0.0.1`.
+- `dev_enabled` is cast with `FILTER_VALIDATE_BOOLEAN` in the config, because `env()` leaves `1`,
+  `on` and `yes` as strings that fail the strict `=== true` checks and silently disable the lock.
 - The form carries a hidden username field (`dev_username`) purely so password managers read it as
   a sign-in and offer to save and fill it. It is never read back on submit, and it must stay a
   `type="text"` input hidden with an inline `display: none` — managers skip `type="hidden"`, and

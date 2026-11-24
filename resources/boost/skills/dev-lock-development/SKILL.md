@@ -49,9 +49,11 @@ migration first and say what was left unverified.
   from before the slim skeleton
 - check whether `config/dev-lock.php` has already been published (step 3 publishes it if not)
 - check whether the app builds Tailwind through `resources/css/app.css`
-- note the version: the package requires Laravel 12 or 13 on PHP 8.3+, which is exactly what its CI
-  covers. On Laravel 11 or older, stop and tell the user to upgrade the app first — those branches
-  are past security support and Composer will not install them alongside this package
+- note the version: the package supports Laravel 11, 12 and 13 on PHP 8.3+, which is exactly what
+  its CI covers (Laravel 11 is not tested on PHP 8.5). On Laravel 11, go ahead, but tell the user
+  the branch is past security support: Composer only installs it with `--no-security-blocking`,
+  and the lock is a way to keep the app protected while it is upgraded, not a reason to stay. On
+  Laravel 10 or older, stop and tell the user to upgrade the app first
 
 ### 2. Find an existing hand-rolled dev lock and list it
 
@@ -185,7 +187,8 @@ redirect to itself.
 ```dotenv
 DEV_LOCK_ENABLED=true
 DEV_LOCK_PASSWORD="a long password you can share with the client"
-# optional, array or comma separated string, defaults to 127.0.0.1 and localhost
+# optional, array or comma separated string, empty by default. Never add 127.0.0.1: behind a
+# tunnel or same-host proxy every visitor arrives from loopback and would skip the lock
 DEV_LOCK_WHITELIST_IPS="1.2.3.4,5.6.7.8"
 # optional, defaults to "dev"; only fills the form's hidden username field for password managers
 DEV_LOCK_USERNAME="dev"
@@ -249,7 +252,10 @@ Behaviour the app can rely on:
   `dev-lock.dev_enabled` is `true`, in the `web` group
 - the password form answers `401` with `X-Frame-Options: DENY`, `X-Robots-Tag: noindex, nofollow`
   and a `no-store` `Cache-Control`
-- unlocking stores `dev_lock_authenticated` in the session and regenerates the session id
+- unlocking stores an HMAC of the password under `dev_lock_authenticated` and regenerates the
+  session id; changing `DEV_LOCK_PASSWORD` locks every existing session out again
+- the whitelist is empty by default; never add `127.0.0.1`, because behind a tunnel or same-host
+  proxy every visitor arrives from loopback
 - failed attempts are rate limited per IP: 5 attempts, then a 5 minute lockout
 - `?redirect_to=` only honours `http`/`https` URLs on the app's own host; anything else lands on `/`
 - the password form renders whether or not the app has a Vite build: the middleware inlines the

@@ -49,12 +49,14 @@ class DevLockMiddleware
             return $next($request);
         }
 
+        $password = $this->configuredPassword();
+
         // A lock without a password can only fail closed: no form, no whitelist, no session.
-        if ($this->configuredPassword() === null) {
+        if ($password === null) {
             return $this->showMisconfiguredNotice();
         }
 
-        if ($this->isAuthenticated()) {
+        if ($this->isAuthenticated($password)) {
             // Nothing left to unlock, so move visitors off the password form.
             if ($request->routeIs('dev.lock')) {
                 return redirect($this->getRedirectUrl($request));
@@ -68,7 +70,7 @@ class DevLockMiddleware
         }
 
         if ($this->isPasswordSubmission($request)) {
-            return $this->handlePasswordSubmission($request);
+            return $this->handlePasswordSubmission($request, $password);
         }
 
         if ($request->routeIs('dev.lock')) {
@@ -112,24 +114,42 @@ class DevLockMiddleware
     }
 
     /**
-     * Check if the visitor already entered the password.
+     * Check if the visitor already entered the current password.
      */
-    private function isAuthenticated(): bool
+    private function isAuthenticated(string $password): bool
     {
-        return session('dev_lock_authenticated') === true;
+        $unlockedWith = session('dev_lock_authenticated');
+
+        return is_string($unlockedWith) && hash_equals($this->passwordFingerprint($password), $unlockedWith);
+    }
+
+    /**
+     * What an unlocked session stores: an HMAC of the password keyed with the app key, not `true`.
+     *
+     * Tying the session to the password means changing DEV_LOCK_PASSWORD (a client's access
+     * ending, a password that leaked) locks out every session unlocked with the old one, instead
+     * of leaving them open until they expire. Keying it with the app key keeps the session store
+     * from holding anything the password could be guessed back from.
+     */
+    private function passwordFingerprint(string $password): string
+    {
+        $key = config('app.key');
+
+        return hash_hmac('sha256', $password, is_string($key) ? $key : '');
     }
 
     /**
      * Check if the client IP is whitelisted.
      *
-     * The config value is either an array or a comma separated string of IPs.
+     * The config value is either an array or a comma separated string of IPs. The string is
+     * trimmed per entry, so "1.2.3.4, 5.6.7.8" whitelists both rather than only the first.
      */
     private function isIpWhitelisted(Request $request): bool
     {
         $allowedIps = config('dev-lock.dev_whitelist_ips', []);
 
         if (! is_array($allowedIps)) {
-            $allowedIps = explode(',', (string) $allowedIps);
+            $allowedIps = array_map(trim(...), explode(',', (string) $allowedIps));
         }
 
         return in_array($request->ip(), $allowedIps, strict: true);
@@ -148,7 +168,7 @@ class DevLockMiddleware
     /**
      * Validate a password submission and let the visitor in when it is correct.
      */
-    private function handlePasswordSubmission(Request $request): RedirectResponse
+    private function handlePasswordSubmission(Request $request, string $password): RedirectResponse
     {
         $rateLimitKey = self::RATE_LIMIT_KEY_PREFIX.$request->ip();
 
@@ -158,7 +178,7 @@ class DevLockMiddleware
             ]));
         }
 
-        if (! $this->isValidPassword($request->input('dev_lock_password'))) {
+        if (! $this->isValidPassword($password, $request->input('dev_lock_password'))) {
             RateLimiter::hit($rateLimitKey, self::LOCKOUT_DURATION);
 
             return $this->rejectPasswordAttempt($request, __('validation.current_password'));
@@ -170,7 +190,7 @@ class DevLockMiddleware
         // beforehand (a sibling subdomain is enough) does not become an unlocked one.
         $request->session()->regenerate();
 
-        session(['dev_lock_authenticated' => true]);
+        session(['dev_lock_authenticated' => $this->passwordFingerprint($password)]);
 
         return redirect($this->getRedirectUrl($request));
     }
@@ -181,11 +201,9 @@ class DevLockMiddleware
      * Anything that is not a string is rejected outright: `dev_lock_password[]=x`
      * submits an array, which would be a TypeError inside hash_equals().
      */
-    private function isValidPassword(mixed $submitted): bool
+    private function isValidPassword(string $expected, mixed $submitted): bool
     {
-        $expected = $this->configuredPassword();
-
-        if ($expected === null || ! is_string($submitted)) {
+        if (! is_string($submitted)) {
             return false;
         }
 

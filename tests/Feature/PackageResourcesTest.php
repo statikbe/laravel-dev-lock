@@ -9,8 +9,31 @@ it('merges the package config with a lock that is off and without a default pass
         ->and(config('dev-lock.dev_password'))->toBeNull()
         ->and(config('dev-lock.dev_username'))->toBe('dev')
         ->and(config('dev-lock.dev_skip_patterns'))->toBe(['up', 'api/*'])
-        ->and(config('dev-lock.dev_whitelist_ips'))->toBe(['127.0.0.1', 'localhost']);
+        ->and(config('dev-lock.dev_whitelist_ips'))->toBe([]);
 });
+
+// env() only casts "true", so anything else that reads as "on" must not leave the lock off.
+it('reads DEV_LOCK_ENABLED as a boolean', function (string $value, bool $enabled) {
+    $_SERVER['DEV_LOCK_ENABLED'] = $value;
+
+    try {
+        $config = require __DIR__.'/../../config/dev-lock.php';
+    } finally {
+        unset($_SERVER['DEV_LOCK_ENABLED']);
+    }
+
+    expect($config['dev_enabled'])->toBe($enabled);
+})->with([
+    'true' => ['true', true],
+    '1' => ['1', true],
+    'on' => ['on', true],
+    'yes' => ['yes', true],
+    'TRUE' => ['TRUE', true],
+    'false' => ['false', false],
+    '0' => ['0', false],
+    'empty' => ['', false],
+    'nonsense' => ['enabled-ish', false],
+]);
 
 it('loads the package translations', function () {
     expect(trans('dev-lock::messages.dev_lock'))
