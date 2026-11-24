@@ -22,6 +22,14 @@ abstract class LockedEnvironmentTestCase extends TestCase
     public const WHITELISTED_IP = '10.0.0.7';
 
     /**
+     * The session value of a visitor who unlocked with the given password.
+     */
+    public function unlockedWith(string $password = self::PASSWORD): string
+    {
+        return hash_hmac('sha256', $password, (string) config('app.key'));
+    }
+
+    /**
      * Register the middleware the way the README tells host apps to.
      *
      * The HTTP kernel is the source of truth for middleware groups (its constructor syncs

@@ -10,9 +10,13 @@ return [
     | Switches the lock on. While it is off the middleware passes every request
     | through and the dev.lock routes are not registered at all.
     |
+    | Cast explicitly because env() only turns "true" into a boolean: "1", "on"
+    | or "yes" would stay strings, fail the strict `=== true` checks, and leave
+    | the environment unlocked without any warning.
+    |
     */
 
-    'dev_enabled' => env('DEV_LOCK_ENABLED', false),
+    'dev_enabled' => filter_var(env('DEV_LOCK_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
 
     /*
     |--------------------------------------------------------------------------
@@ -50,12 +54,15 @@ return [
     | Clients on these IPs never see the password form. Either an array or a
     | comma separated string, e.g. DEV_LOCK_WHITELIST_IPS="1.2.3.4,5.6.7.8".
     |
+    | Empty by default on purpose. Behind a tunnel (herd share, Expose, ngrok,
+    | cloudflared) or a reverse proxy on the same machine, every visitor arrives
+    | from 127.0.0.1, so whitelisting loopback would unlock the environment for
+    | everyone. The IP compared is $request->ip(), so behind a proxy this only
+    | holds when the app's TrustProxies configuration is correct.
+    |
     */
 
-    'dev_whitelist_ips' => env('DEV_LOCK_WHITELIST_IPS', [
-        '127.0.0.1',
-        'localhost',
-    ]),
+    'dev_whitelist_ips' => env('DEV_LOCK_WHITELIST_IPS', []),
 
     /*
     |--------------------------------------------------------------------------

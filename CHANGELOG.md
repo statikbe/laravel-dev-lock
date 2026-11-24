@@ -1,19 +1,14 @@
 # Release Notes
 
-## [Added password manager autocomplete support](https://github.com/statikbe/laravel-dev-lock/releases/tag/v0.0.1/compare/v0.0.2...Added password manager autocomplete support) - 2026-10-01
+## [0.0.3](https://github.com/statikbe/laravel-dev-lock/compare/0.0.2...0.0.3) - 2026-10-01
 
 Password managers like 1password are now able to autofill the dev lock password.
 
-## [v0.0.2](https://github.com/statikbe/laravel-dev-lock/releases/tag/v0.0.1/compare/0.0.1...v0.0.2) - 2026-08-31
+## [0.0.2](https://github.com/statikbe/laravel-dev-lock/compare/0.0.1...0.0.2) - 2026-08-31
 
 - Add support for laravel 11.
 
-## [0.0.1](https://github.com/statikbe/laravel-dev-lock/releases/tag/v0.0.1/compare/v0.0.1...0.0.1) - 2026-08-04
-
-<!-- Release notes generated using configuration in .github/release.yml at main -->
-**Full Changelog**: https://github.com/statikbe/laravel-dev-lock/commits/0.0.1
-
-## [v0.0.1](https://github.com/statikbe/laravel-dev-lock/releases/tag/v0.0.1) - 2026-08-04
+## [0.0.1](https://github.com/statikbe/laravel-dev-lock/releases/tag/0.0.1) - 2026-08-04
 
 First pre-release. Password protects environments that should not be publicly reachable
 (staging, acceptance, client preview) without an `.htaccess` file or server level basic auth.

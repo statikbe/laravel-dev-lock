@@ -18,6 +18,10 @@ The whole package is one middleware. Turn it on with an env variable, add it to 
 > This hides an environment, it is not authentication. It keeps crawlers, search engines and
 > forwarded links out of a staging site behind one shared password; it is not a substitute for
 > protecting user data.
+>
+> It also only guards requests that reach Laravel's `web` routes. Files your web server serves
+> straight from `public/` — uploads behind the `public/storage` link, the compiled `public/build`
+> assets — stay reachable to anyone with the URL, where server level basic auth would cover them.
 
 ## Requirements
 
@@ -97,7 +101,7 @@ That is all. The lock is off by default, so nothing changes on environments that
 | `DEV_LOCK_ENABLED` | `dev_enabled` | `false` | Switches the lock on. While it is off, requests pass through and the password routes are not even registered. |
 | `DEV_LOCK_PASSWORD` | `dev_password` | `null` | The password visitors have to enter. There is no default on purpose — see below. |
 | `DEV_LOCK_USERNAME` | `dev_username` | `'dev'` | Fills the form's hidden username field so password managers can save and autofill the lock. Never validated — see [Password managers](#password-managers). |
-| `DEV_LOCK_WHITELIST_IPS` | `dev_whitelist_ips` | `['127.0.0.1', 'localhost']` | IPs that never see the form. An array, or a comma separated string: `DEV_LOCK_WHITELIST_IPS="1.2.3.4,5.6.7.8"`. |
+| `DEV_LOCK_WHITELIST_IPS` | `dev_whitelist_ips` | `[]` | IPs that never see the form. An array, or a comma separated string: `DEV_LOCK_WHITELIST_IPS="1.2.3.4,5.6.7.8"`. See [IP whitelist](#ip-whitelist) before adding loopback. |
 | — | `dev_skip_patterns` | `['up', 'api/*']` | Paths that stay reachable while the lock is on. Matched with `Request::is()`, so wildcards work. |
 | `DEV_LOCK_VITE_ENTRYPOINT` | `dev_vite_entrypoint` | `'resources/css/app.css'` | The compiled CSS used to style the password page. Point it at the entrypoint your app builds, or set it to `null` to always use the package's own stylesheet. |
 
@@ -108,6 +112,19 @@ Config keys live under the `dev-lock` namespace, so `dev_enabled` is
 > Enabling the lock without setting `DEV_LOCK_PASSWORD` fails closed: every protected
 > request gets a `503` telling you the password is missing. It never renders a form nobody can
 > get past, and it never lets requests through.
+
+### IP whitelist
+
+The whitelist is empty by default. Do not add `127.0.0.1`: behind a tunnel (`herd share`, Expose,
+ngrok, cloudflared) or a reverse proxy on the same machine, every visitor arrives from loopback,
+and the lock would let all of them through. To skip the lock on your own machine, leave
+`DEV_LOCK_ENABLED` unset there instead.
+
+Whitelisted IPs are matched against `$request->ip()`, as is the per-IP rate limit on password
+attempts. Behind a load balancer or CDN that is only the real client IP when the app's
+[trusted proxies](https://laravel.com/docs/requests#configuring-trusted-proxies) are configured —
+trusting every proxy on a host that is also reachable directly lets anyone claim a whitelisted IP
+with an `X-Forwarded-For` header.
 
 Publish the config file to change the skipped paths:
 
@@ -128,6 +145,8 @@ A few details worth knowing:
 
 - Failed attempts are rate limited per IP: 5 tries, then a 5 minute lockout.
 - The session ID is regenerated on success, so a planted session cannot be promoted to an unlocked one.
+- An unlocked session is tied to the password it was unlocked with. Changing `DEV_LOCK_PASSWORD` locks everyone out again, so rotating it is how you end someone's access.
+- `DEV_LOCK_ENABLED` accepts any boolean-like value — `true`, `1`, `on`, `yes`.
 - `?redirect_to=` only accepts `http`/`https` URLs on your own host; anything else lands on `/`. The lock cannot be used as an open redirect.
 - The form is served with `X-Frame-Options: DENY`, `X-Robots-Tag: noindex, nofollow` and a `no-store` `Cache-Control`.
 

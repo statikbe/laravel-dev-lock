@@ -37,6 +37,26 @@ it('lets whitelisted IPs straight through', function () {
         ->assertSee('dashboard behind the lock');
 });
 
+it('trims whitelisted IPs given as a comma separated string', function () {
+    config()->set('dev-lock.dev_whitelist_ips', '10.0.0.8, '.LockedEnvironmentTestCase::WHITELISTED_IP);
+
+    $this->withServerVariables(['REMOTE_ADDR' => LockedEnvironmentTestCase::WHITELISTED_IP])
+        ->get('/dashboard')
+        ->assertOk()
+        ->assertSee('dashboard behind the lock');
+});
+
+// Behind a tunnel or a same-host reverse proxy every visitor arrives from loopback, so the
+// shipped default must not let loopback through.
+it('does not let loopback traffic through with the shipped whitelist', function () {
+    $shipped = require __DIR__.'/../../config/dev-lock.php';
+    config()->set('dev-lock.dev_whitelist_ips', $shipped['dev_whitelist_ips']);
+
+    $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1'])
+        ->get('/dashboard')
+        ->assertRedirect(route('dev.lock', ['redirect_to' => 'http://localhost/dashboard']));
+});
+
 it('shows the password form with hardened headers', function () {
     $response = $this->get(route('dev.lock'));
 
@@ -89,7 +109,7 @@ it('ignores whatever a password manager autofilled into the username field', fun
         'dev_lock_password' => LockedEnvironmentTestCase::PASSWORD,
     ])
         ->assertRedirect('/')
-        ->assertSessionHas('dev_lock_authenticated', true);
+        ->assertSessionHas('dev_lock_authenticated', $this->unlockedWith());
 });
 
 it('unlocks the session and returns the visitor to their destination on the correct password', function () {
@@ -97,18 +117,34 @@ it('unlocks the session and returns the visitor to their destination on the corr
         'dev_lock_password' => LockedEnvironmentTestCase::PASSWORD,
     ])
         ->assertRedirect('http://localhost/dashboard')
-        ->assertSessionHas('dev_lock_authenticated', true);
+        ->assertSessionHas('dev_lock_authenticated', $this->unlockedWith());
 });
 
 it('lets an unlocked session reach the application', function () {
-    $this->withSession(['dev_lock_authenticated' => true])
+    $this->withSession(['dev_lock_authenticated' => $this->unlockedWith()])
         ->get('/dashboard')
         ->assertOk()
         ->assertSee('dashboard behind the lock');
 });
 
-it('returns an unlocked session away from the password form', function () {
+it('locks out sessions unlocked with a password that has since been changed', function () {
+    $unlockedWithOldPassword = $this->unlockedWith();
+    config()->set('dev-lock.dev_password', 'a-rotated-password');
+
+    $this->withSession(['dev_lock_authenticated' => $unlockedWithOldPassword])
+        ->get('/dashboard')
+        ->assertRedirect(route('dev.lock', ['redirect_to' => 'http://localhost/dashboard']));
+});
+
+// Sessions unlocked before the session was tied to the password stored a plain `true`.
+it('does not accept the old boolean session flag', function () {
     $this->withSession(['dev_lock_authenticated' => true])
+        ->get('/dashboard')
+        ->assertRedirect(route('dev.lock', ['redirect_to' => 'http://localhost/dashboard']));
+});
+
+it('returns an unlocked session away from the password form', function () {
+    $this->withSession(['dev_lock_authenticated' => $this->unlockedWith()])
         ->get(route('dev.lock', ['redirect_to' => 'http://localhost/dashboard']))
         ->assertRedirect('http://localhost/dashboard');
 });
@@ -124,12 +160,12 @@ it('refuses to redirect to another host after unlocking', function () {
     $this->post(route('dev.lock.submit', ['redirect_to' => 'https://evil.example']), [
         'dev_lock_password' => LockedEnvironmentTestCase::PASSWORD,
     ])
-        ->assertSessionHas('dev_lock_authenticated', true)
+        ->assertSessionHas('dev_lock_authenticated', $this->unlockedWith())
         ->assertRedirect('/');
 });
 
 it('refuses off-host redirect targets for an already unlocked session', function () {
-    $this->withSession(['dev_lock_authenticated' => true])
+    $this->withSession(['dev_lock_authenticated' => $this->unlockedWith()])
         ->get(route('dev.lock', ['redirect_to' => 'https://evil.example/phishing']))
         ->assertRedirect('/');
 });
@@ -168,7 +204,7 @@ it('denies access instead of showing a form when no password is configured', fun
 it('denies whitelisted IPs and unlocked sessions too when no password is configured', function () {
     config()->set('dev-lock.dev_password', null);
 
-    $this->withSession(['dev_lock_authenticated' => true])
+    $this->withSession(['dev_lock_authenticated' => $this->unlockedWith()])
         ->withServerVariables(['REMOTE_ADDR' => LockedEnvironmentTestCase::WHITELISTED_IP])
         ->get('/dashboard')
         ->assertStatus(503)

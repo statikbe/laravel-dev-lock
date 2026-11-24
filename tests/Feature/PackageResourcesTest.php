@@ -3,14 +3,38 @@
 declare(strict_types=1);
 
 use Illuminate\Support\ServiceProvider;
+use Statikbe\DevLock\Tests\PublishedStylesheetLock;
 
 it('merges the package config with a lock that is off and without a default password', function () {
     expect(config('dev-lock.dev_enabled'))->toBeFalse()
         ->and(config('dev-lock.dev_password'))->toBeNull()
         ->and(config('dev-lock.dev_username'))->toBe('dev')
         ->and(config('dev-lock.dev_skip_patterns'))->toBe(['up', 'api/*'])
-        ->and(config('dev-lock.dev_whitelist_ips'))->toBe(['127.0.0.1', 'localhost']);
+        ->and(config('dev-lock.dev_whitelist_ips'))->toBe([]);
 });
+
+// env() only casts "true", so anything else that reads as "on" must not leave the lock off.
+it('reads DEV_LOCK_ENABLED as a boolean', function (string $value, bool $enabled) {
+    $_SERVER['DEV_LOCK_ENABLED'] = $value;
+
+    try {
+        $config = require __DIR__.'/../../config/dev-lock.php';
+    } finally {
+        unset($_SERVER['DEV_LOCK_ENABLED']);
+    }
+
+    expect($config['dev_enabled'])->toBe($enabled);
+})->with([
+    'true' => ['true', true],
+    '1' => ['1', true],
+    'on' => ['on', true],
+    'yes' => ['yes', true],
+    'TRUE' => ['TRUE', true],
+    'false' => ['false', false],
+    '0' => ['0', false],
+    'empty' => ['', false],
+    'nonsense' => ['enabled-ish', false],
+]);
 
 it('loads the package translations', function () {
     expect(trans('dev-lock::messages.dev_lock'))
@@ -49,6 +73,8 @@ it('publishes the fallback stylesheet where the middleware looks for it', functi
 it('actually copies the fallback stylesheet when the css tag is published', function () {
     $target = resource_path('css/vendor/dev-lock/dev-lock.css');
 
+    PublishedStylesheetLock::acquire();
+
     try {
         $this->artisan('vendor:publish', ['--tag' => 'dev-lock-css'])->assertSuccessful();
 
@@ -57,6 +83,8 @@ it('actually copies the fallback stylesheet when the css tag is published', func
     } finally {
         // The middleware prefers this copy, so leaving it behind would leak into other tests.
         is_file($target) && unlink($target);
+
+        PublishedStylesheetLock::release();
     }
 });
 
